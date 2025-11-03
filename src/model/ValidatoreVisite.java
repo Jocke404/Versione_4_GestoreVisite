@@ -31,8 +31,11 @@ public class ValidatoreVisite {
                 if(visita.getPostiPrenotati() >= visita.getMinPartecipanti()){
                     visita.setStato("Confermata");
                     visiteManager.aggiornaVisita(visita.getId(), visita);
-                } else {
+                } else if (visita.getPostiPrenotati() < visita.getMinPartecipanti()) {
                     visita.setStato("Cancellata");
+                    visiteManager.aggiornaVisita(visita.getId(), visita);
+                } else if (visita.getPostiPrenotati() == visita.getMaxPersone()) {
+                    visita.setStato("Completa");
                     visiteManager.aggiornaVisita(visita.getId(), visita);
                 }
             }

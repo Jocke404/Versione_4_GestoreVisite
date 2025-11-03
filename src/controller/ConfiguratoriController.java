@@ -354,7 +354,7 @@ public class ConfiguratoriController {
 
     public void modificaNumeroPersoneIscrivibili() {
         viewUtilita.stampaMaxPersoneIscrivibiliNow();
-        consoleIO.chiediAnnullaOperazione();
+        if (consoleIO.chiediAnnullaOperazione()) return;
         int numeroMax = consoleIO.chiediNumeroMaxPersone(visiteManagerDB);
         if (consoleIO.chiediConfermaNumeroMax(numeroMax)) {
             modificaUtilita.aggiornaNumeroPersoneIscrivibili(numeroMax);

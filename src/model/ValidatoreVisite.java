@@ -38,6 +38,13 @@ public class ValidatoreVisite {
                     visita.setStato("Completa");
                     visiteManager.aggiornaVisita(visita.getId(), visita);
                 }
+            } else  if (visita.getData().isEqual(LocalDate.now())) {
+                if (visita.getOraInizio().plusMinutes(visita.getDurataMinuti()).isAfter(LocalTime.now())
+                    && visita.getStato().equals("Completa")) {
+                        visita.setStato("Effettuata");
+                        visiteManager.aggiornaVisita(visita.getId(), visita);
+                }
+
             }
         }
     }

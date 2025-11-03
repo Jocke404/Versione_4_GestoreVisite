@@ -399,7 +399,7 @@ public class ConsoleIO implements View{
             return LocalDate.of(anno, mese, giorno);
         } else {
             LocalDate oggi = LocalDate.now();
-            YearMonth meseTarget = YearMonth.of(oggi.getYear(), oggi.getMonth().plus(3));
+            YearMonth meseTarget = YearMonth.from(oggi).plusMonths(3);
             List<LocalDate> dateValide = new ArrayList<>();
             for (int giorno = 1; giorno <= meseTarget.lengthOfMonth(); giorno++) {
                 LocalDate data = meseTarget.atDay(giorno);

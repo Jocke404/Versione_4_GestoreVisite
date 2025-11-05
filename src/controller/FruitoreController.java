@@ -44,9 +44,9 @@ public class FruitoreController {
         viewUtilita.visualizzaPrenotazioni(fruitoreCorrente, prenotazioneManager);
     }
 
-    // public void cancellaPrenotazione() {
-    //     modificaUtilita.cancellaPrenotazione(fruitoreCorrente, prenotazioneManager);
-    // }
+     
+     
+     
 
     public void cancellaPrenotazione() {
         List<Prenotazione> prenotazioni = prenotazioneManager.miePrenotazioni(fruitoreCorrente);

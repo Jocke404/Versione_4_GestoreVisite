@@ -56,7 +56,7 @@ public class LuoghiManager extends DatabaseManager {
         }
     }
 
-    // Metodo per aggiornare un luogo nel database
+     
     private void aggiornaLuogo(String nome, Luogo luogoAggiornato) {
         String sql = "UPDATE luoghi SET descrizione = ?, collocazione = ?, tipi_di_visita = ? WHERE nome = ?";
         executorService.submit(() -> {
@@ -75,7 +75,7 @@ public class LuoghiManager extends DatabaseManager {
         });
     }
 
-    // Metodo per aggiungere un luogo al database
+     
     private void aggiungiLuogo(Luogo luogo) {
         String inserisciSql = "INSERT INTO luoghi (nome, descrizione, collocazione, tipi_di_visita) VALUES (?, ?, ?, ?)";
 

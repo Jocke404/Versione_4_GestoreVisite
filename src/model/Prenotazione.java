@@ -24,7 +24,7 @@ public class Prenotazione {
         return "PRN" + System.currentTimeMillis() + (int)(Math.random() * 1000);
     }
 
-    // Getter e Setter
+     
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     

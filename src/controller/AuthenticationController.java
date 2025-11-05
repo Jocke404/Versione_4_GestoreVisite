@@ -30,7 +30,7 @@ public class AuthenticationController {
                 return false;
             }
 
-            // Gestione password temporanea
+             
             if (!credentialManager.isPasswordModificata(email)) {
                 consoleIO.mostraMessaggio("Hai credenziali temporanee. Ti preghiamo di modificarle.");
                 boolean emailCorretta = consoleIO.chiediConfermaEmail(email);
@@ -65,14 +65,14 @@ public class AuthenticationController {
         consoleIO.mostraMessaggio("Password aggiornata con successo.");
     }
 
-    // public Utente creaNuovoUtente(String tipoUtente) {
-    //     String name = consoleIO.chiediNome();
-    //     String surname = consoleIO.chiediCognome();
-    //     String newEmail = consoleIO.chiediNuovaEmail(credentialManager);
-    //     String newPassword = consoleIO.chiediPassword();
-    //     Utente nuovoUtente = credentialManager.creaNuoveCredenziali(tipoUtente, name, surname, newEmail, newPassword);
-    //     return nuovoUtente;
-    // }
+     
+     
+     
+     
+     
+     
+     
+     
 
     public Utente creaNuovoUtente() {
         String name = consoleIO.chiediNome();

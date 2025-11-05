@@ -43,7 +43,7 @@ public abstract class DatabaseManager {
         String sqlUtentiUnificati = "UPDATE utenti_unificati SET email = ? WHERE email = ?";
 
         try (Connection conn = DatabaseConnection.connect()) {
-            // primo UPDATE sulla tabella specifica
+             
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 consoleIO.mostraMessaggio("Aggiorno email: " + vecchiaEmail + " -> " + nuovaEmail + " (tabella: " + tipoUtente + ")");
 
@@ -52,22 +52,22 @@ public abstract class DatabaseManager {
                 int rowsAffected = pstmt.executeUpdate();
 
                 if (rowsAffected > 0) {
-                    // aggiorna anche utenti_unificati prima di ritornare
+                     
                     try (PreparedStatement pstmtUt = conn.prepareStatement(sqlUtentiUnificati)) {
                         pstmtUt.setString(1, nuovaEmail);
                         pstmtUt.setString(2, vecchiaEmail);
                         pstmtUt.executeUpdate();
                     } catch (SQLException ex) {
                         consoleIO.mostraErrore("Errore aggiornamento utenti_unificati: " + ex.getMessage());
-                        // non interrompiamo l'operazione principale: procediamo comunque a sincronizzare l'oggetto
+                         
                     }
                     utente.setEmail(nuovaEmail);
                     consoleIO.mostraMessaggio("Email aggiornata con successo.");
                     return true;
                 } else {
-                    // se nessuna riga aggiornata, verifica se la nuovaEmail è già presente (aggiornamento fatto altrove)
+                     
                     if (recordEsiste("SELECT 1 FROM " + tipoUtente + " WHERE email = ?", nuovaEmail)) {
-                        // cerca comunque di aggiornare utenti_unificati (potrebbe non essere stato fatto)
+                         
                         try (PreparedStatement pstmtUt = conn.prepareStatement(sqlUtentiUnificati)) {
                             pstmtUt.setString(1, nuovaEmail);
                             pstmtUt.setString(2, vecchiaEmail);
@@ -75,7 +75,7 @@ public abstract class DatabaseManager {
                         } catch (SQLException ex) {
                             consoleIO.mostraErrore("Errore aggiornamento utenti_unificati: " + ex.getMessage());
                         }
-                        // sincronizza oggetto in memoria
+                         
                         utente.setEmail(nuovaEmail);
                         consoleIO.mostraMessaggio("Email già aggiornata nel DB (persistita da altro processo).");
                         return true;
@@ -90,7 +90,7 @@ public abstract class DatabaseManager {
         return false;
     }
 
-    //Metodo per aggiungere in utenti unificati
+     
     protected void aggiungiUtenteUnificato(Utente utente, boolean passwordModificata) {
         String nome = utente.getNome();
         String cognome = utente.getCognome();

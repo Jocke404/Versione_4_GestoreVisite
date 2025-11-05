@@ -26,7 +26,7 @@ public class PrenotazioneManager extends DatabaseManager {
     }
 
     protected boolean addPrenotazione(String emailFruitore, int idVisita,  int numeroPersone) {
-        // Verifica disponibilità posti
+         
         Visita visita = visiteManager.getVisiteMap().get(idVisita);
         if (visita == null) {
             consoleIO.mostraErrore("Visita non trovata");
@@ -39,7 +39,7 @@ public class PrenotazioneManager extends DatabaseManager {
             return false;
         }
 
-        // Verifica che il fruitore non abbia già prenotato questa visita
+         
         if (haFruitorePrenotatoVisita(emailFruitore, idVisita)) {
             consoleIO.mostraErrore("Hai già prenotato questa visita");
             return false;
@@ -156,14 +156,14 @@ public class PrenotazioneManager extends DatabaseManager {
         try (Connection conn = DatabaseConnection.connect()) {
             conn.setAutoCommit(false);
 
-            // Aggiorna stato prenotazione
+             
             String sqlCancella = "UPDATE prenotazioni SET stato = 'CANCELLATA' WHERE codice_prenotazione = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sqlCancella)) {
                 pstmt.setString(1, codicePrenotazione);
                 pstmt.executeUpdate();
             }
 
-            // Libera posti nella visita
+             
             String sqlAggiornaVisita = "UPDATE visite SET posti_prenotati = posti_prenotati - ? WHERE id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sqlAggiornaVisita)) {
                 pstmt.setInt(1, prenotazione.getNumeroPersone());
@@ -185,7 +185,7 @@ public class PrenotazioneManager extends DatabaseManager {
 
     public void creaPrenotazione(Fruitore fruitore, Visita visita,  int numeroPersone) {
         addPrenotazione(fruitore.getEmail(), visita.getId(), numeroPersone);
-        // Aggiorna la visita con il numero di posti prenotati
+         
         visita.setPostiPrenotati(visita.getPostiPrenotati() + numeroPersone);
 
     }

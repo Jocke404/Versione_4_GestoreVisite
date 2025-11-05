@@ -25,7 +25,7 @@ public class VolontariManager extends DatabaseManager {
         caricaVolontari();
     }
 
-    // Metodo per sincronizzare i volontari
+     
     public void sincronizzaVolontari() {
         for (Volontario volontario : volontariMap.values()) {
             aggiungiVolontario(volontario);
@@ -34,7 +34,7 @@ public class VolontariManager extends DatabaseManager {
         consoleIO.mostraMessaggio("Sincronizzazione dei volontari completata.");
     }
 
-    // Metodo per caricare i volontari dal database e memorizzarli nella HashMap
+     
     protected void caricaVolontari() {
         String sql = "SELECT nome, cognome, email, password, tipi_di_visite FROM volontari";
         try (Connection conn = DatabaseConnection.connect();
@@ -67,7 +67,7 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-    // Metodo per aggiungere un volontario al database
+     
     protected void aggiungiVolontario(Volontario volontario) {
         String inserisciSqlVolontari = "INSERT INTO volontari (nome, cognome, email, password, tipi_di_visite, password_modificata) VALUES (?, ?, ?, ?, ?, ?)";
     
@@ -82,33 +82,33 @@ public class VolontariManager extends DatabaseManager {
             pstmt.executeUpdate();
             consoleIO.mostraMessaggio("Volontario aggiunto con successo nella tabella 'volontari'.");
     
-            // Aggiungi anche nella tabella 'utenti_unificati'
+             
             aggiungiUtenteUnificato(volontario, false);
         } catch (SQLException e) {
             System.err.println("Errore durante l'aggiunta del volontario: " + e.getMessage());
         }
     }
 
-    // Metodo per aggiornare un volontario nel database
+     
     protected void aggiornaPswVolontario(String email, String nuovaPassword) {
         String sqlVolontari = "UPDATE volontari SET password = ?, password_modificata = ? WHERE email = ?";
         String sqlUtentiUnificati = "UPDATE utenti_unificati SET password = ?, password_modificata = ? WHERE email = ?";
     
         executorService.submit(() -> {
             try (Connection conn = DatabaseConnection.connect()) {
-                // Aggiorna la tabella "volontari"
+                 
                 try (PreparedStatement pstmtVolontari = conn.prepareStatement(sqlVolontari)) {
                     pstmtVolontari.setString(1, nuovaPassword);
-                    pstmtVolontari.setBoolean(2, true); // Imposta password_modificata a true
+                    pstmtVolontari.setBoolean(2, true);  
                     pstmtVolontari.setString(3, email);
                     pstmtVolontari.executeUpdate();
 
                 }
     
-                // Aggiorna la tabella "utenti_unificati"
+                 
                 try (PreparedStatement pstmtUtenti = conn.prepareStatement(sqlUtentiUnificati)) {
                     pstmtUtenti.setString(1, nuovaPassword);
-                    pstmtUtenti.setBoolean(2, true); // Imposta password_modificata a true
+                    pstmtUtenti.setBoolean(2, true);  
                     pstmtUtenti.setString(3, email);
                     pstmtUtenti.executeUpdate();
 
@@ -124,13 +124,13 @@ public class VolontariManager extends DatabaseManager {
         String sqlUtentiUnificati = "DELETE FROM utenti_unificati WHERE email = ?";
         executorService.submit(() -> {
             try (Connection conn = DatabaseConnection.connect()) {
-                // Elimina dalla tabella "volontari"
+                 
                 try (PreparedStatement pstmt = conn.prepareStatement(sqlVolontari)) {
                     pstmt.setString(1, volontarioDaEliminare.getEmail());
                     pstmt.executeUpdate();
                 }
 
-                // Elimina dalla tabella "utenti_unificati"
+                 
                 try (PreparedStatement pstmt = conn.prepareStatement(sqlUtentiUnificati)) {
                     pstmt.setString(1, volontarioDaEliminare.getEmail());
                     pstmt.executeUpdate();
@@ -170,7 +170,7 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-        //metodo per aggiornare i tipi di visita di un volontario
+         
     protected void aggiornaTipiVisitaClassVolontario(String email, List<TipiVisitaClass> nuoviTipiVisitaClass) {
         String sql= "UPDATE volontari SET tipi_di_visite = ? WHERE email = ?";
         executorService.submit(() -> {
@@ -180,7 +180,7 @@ public class VolontariManager extends DatabaseManager {
                 pstmt.setString(2, email);
                 int rowsUpdated = pstmt.executeUpdate();
                 if (rowsUpdated > 0) {
-                    //aggiorna anche nella mappa locale
+                     
                     synchronized (volontariMap) {
                         Volontario volontario = volontariMap.get(email);
                         if (volontario != null) {
@@ -216,7 +216,7 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
-    // metodo per aggiungere un tipo di visita a un volontaro
+     
     public void aggiungiTipoVisitaAVolontari (String email, TipiVisitaClass tipoVisita){
         synchronized (volontariMap){
             Volontario volontario = volontariMap.get(email);
@@ -230,7 +230,7 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-    //metodo per rimuovere tipi di visita da un volontario
+     
     public void rimuoviTipiVisitaClassVolontario (String email, List<TipiVisitaClass> tipiVisitaDaRimuovere){
         String sql = "UPDATE volontari SET tipi_di_visite = ? WHERE email = ?";
         executorService.submit(() -> {
@@ -240,7 +240,7 @@ public class VolontariManager extends DatabaseManager {
                 synchronized (volontariMap) {
                     Volontario volontario = volontariMap.get(email);
                     if (volontario != null) {
-                        //rimuovi i tipi di visita dalla lista
+                         
                         List<TipiVisitaClass> nuoviTipiVisitaClass = new ArrayList<>(volontario.getTipiDiVisite());
                         nuoviTipiVisitaClass.removeAll(tipiVisitaDaRimuovere);
 
@@ -249,7 +249,7 @@ public class VolontariManager extends DatabaseManager {
                         int rowsUpdated = pstmt.executeUpdate();
 
                         if (rowsUpdated > 0) {
-                            //aggiorna anche nella mappa locale
+                             
                             volontario.setTipiDiVisite(nuoviTipiVisitaClass);
                             consoleIO.mostraMessaggio("Tipi di visita rimossi con successo per il volontario " + email);
                         } else {
@@ -280,12 +280,12 @@ public class VolontariManager extends DatabaseManager {
         return -1;
     }
 
-    //metodo per rimuovere un singolo tipo di visita da un volontario
+     
     public void rimuoviTipoVisitaDaVolontario (String email, TipiVisitaClass tipoVisita){
         rimuoviTipiVisitaClassVolontario(email, Arrays.asList(tipoVisita));
     }
 
-    //metodo per ottenere tutti i volontaari per un tipo di visita specifico
+     
     public List<Volontario> getVolontariPerTipoVisita (TipiVisitaClass tipoVisita){
         List<Volontario> volontariPerTipo = new ArrayList<>();
         synchronized (volontariMap) {
@@ -297,7 +297,7 @@ public class VolontariManager extends DatabaseManager {
         } return volontariPerTipo;
     }
 
-    //metodo per ottenere tutti i tipi di visita con i relativi volontari
+     
     public Map<TipiVisitaClass, List<Volontario>> getVolontariPerTipoVisita(){
         Map<TipiVisitaClass, List<Volontario>> volontariPerTipo = new HashMap<>();
         synchronized (volontariMap) {

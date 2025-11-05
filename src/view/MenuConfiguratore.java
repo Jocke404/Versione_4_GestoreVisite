@@ -78,7 +78,7 @@ public class MenuConfiguratore implements Menu {
                 case 4 -> configuratoriController.modificaMaxPersone();
                 case 5 -> configuratoriController.modificaNumeroPersoneIscrivibili();
                 case 6 -> configuratoriController.eliminaDatePrecluse();
-                //case 7 -> configuratoriController.aggiungiNuovoTipoVisita();
+                 
 
                 case 0 -> tornaIndietro = true;
                 default -> System.out.println("Opzione non valida.");

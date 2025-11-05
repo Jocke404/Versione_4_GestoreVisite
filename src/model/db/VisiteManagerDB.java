@@ -30,7 +30,7 @@ public class VisiteManagerDB extends DatabaseManager {
     }
 
     //Logiche delle visite--------------------------------------------------
-    // Metodo per caricare un luogo nel database e memorizzarlo nella HashMap
+     
     protected void caricaVisite() {
         String sql = "SELECT id, titolo, luogo, tipo_visita, volontario, data, stato, max_persone, ora_inizio, durata_minuti, posti_prenotati, min_partecipanti, biglietto, barriere_architettoniche FROM visite";
         try (Connection conn = DatabaseConnection.connect();
@@ -45,7 +45,7 @@ public class VisiteManagerDB extends DatabaseManager {
                     String luogo = rs.getString("luogo");
                     List<TipiVisitaClass> tipoVisita = TipiVisitaClass.fromString(rs.getString("tipo_visita"));
                     String volontario = rs.getString("volontario");
-                    LocalDate data = rs.getDate("data") != null ? rs.getDate("data").toLocalDate() : null; // Converte la data in LocalDate
+                    LocalDate data = rs.getDate("data") != null ? rs.getDate("data").toLocalDate() : null;  
                     int maxPersone = rs.getInt("max_persone");
                     String stato = rs.getString("stato");
                     LocalTime oraInizio = rs.getTime("ora_inizio") != null ? rs.getTime("ora_inizio").toLocalTime() : null;
@@ -55,7 +55,7 @@ public class VisiteManagerDB extends DatabaseManager {
                     boolean biglietto = rs.getBoolean("biglietto");
                     boolean barriereArchitettoniche = rs.getBoolean("barriere_architettoniche");
 
-                    // Usa il costruttore completo di Visite
+                     
                     Visita visita = new Visita(id, titolo, luogo, tipoVisita, volontario,
                                                 data, maxPersone, stato, oraInizio,
                                                 durataMinuti, postiPrenotati, minPartecipanti, biglietto, barriereArchitettoniche);
@@ -67,7 +67,7 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
-    // Metodo per aggiungere una visita al database
+     
     protected void aggiungiVisita(Visita visita) {
         String inserisciSql = "INSERT INTO visite (luogo, titolo, tipo_visita, volontario, data, stato, max_persone, ora_inizio, durata_minuti, min_partecipanti, biglietto, barriere_architettoniche) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -166,7 +166,7 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
-    // Metodo per aggiornare una visita specifica
+     
     protected void aggiornaVisitaDB(int visitaId, Visita visitaAggiornata) {
         String sql = "UPDATE visite SET luogo = ?, tipo_visita = ?, volontario = ?, data = ?, stato = ?, max_persone = ?, ora_inizio = ?, durata_minuti = ? WHERE id = ?";
         executorService.submit(() -> {
@@ -204,7 +204,7 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
-    // Metodo per aggiornare il numero massimo di persone per tutte le visite
+     
     protected void aggiornaMaxPersonePerVisita(int maxPersonePerVisita) {
         String sql = "UPDATE visite SET max_persone = ?";
         executorService.submit(() -> {
@@ -235,7 +235,7 @@ public class VisiteManagerDB extends DatabaseManager {
                  PreparedStatement pstmtTipiVisita = conn.prepareStatement(sqlTipiVisita);
                  PreparedStatement pstmtVisite = conn.prepareStatement(sqlVisite)) {
 
-                // Rimuovi il tipo dalla lista comma-separated dei luoghi
+                 
                 pstmtSelectLuoghi.setString(1, "%" + tipoDaRimuovere.getNome() + "%");
                 try (ResultSet rs = pstmtSelectLuoghi.executeQuery()) {
                     while (rs.next()) {
@@ -262,7 +262,7 @@ public class VisiteManagerDB extends DatabaseManager {
                     }
                 }
 
-                // Rimuovi il tipo dalla lista comma-separated dei volontari
+                 
                 pstmtSelectVolontari.setString(1, "%" + tipoDaRimuovere.getNome() + "%");
                 try (ResultSet rs = pstmtSelectVolontari.executeQuery()) {
                     while (rs.next()) {
@@ -289,16 +289,16 @@ public class VisiteManagerDB extends DatabaseManager {
                     }
                 }
 
-                // Imposta lo stato di tutte le visite corrispondenti a "CANCELLATA"
+                 
                 pstmtVisite.setString(1, "CANCELLATA");
                 pstmtVisite.setString(2, tipoDaRimuovere.getNome());
                 pstmtVisite.executeUpdate();
 
-                // Rimuovi dalla tabella tipi_visita
+                 
                 pstmtTipiVisita.setString(1, tipoDaRimuovere.getNome());
                 pstmtTipiVisita.executeUpdate();
 
-                // Ricarica cache visite
+                 
                 caricaVisite();
 
             } catch (SQLException e) {
@@ -338,7 +338,7 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
-    // Metodo per recuperare il numero massimo di persone per visita dal database
+     
     protected int getMaxPersoneDefault() {
         String sql = "SELECT max_persone FROM visite";
         try (Connection conn = DatabaseConnection.connect();

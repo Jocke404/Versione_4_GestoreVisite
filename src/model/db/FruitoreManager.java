@@ -29,7 +29,7 @@ public class FruitoreManager extends DatabaseManager {
     }
 
     // Logiche dei fruitori--------------------------------------------------
-    // Metodo per caricare i fruitori dal database e memorizzarli nella HashMap
+     
     protected void caricaFruitori() {
         String sql = "SELECT nome, cognome, email, password FROM fruitori";
         try (Connection conn = DatabaseConnection.connect();
@@ -59,18 +59,18 @@ public class FruitoreManager extends DatabaseManager {
     
         executorService.submit(() -> {
             try (Connection conn = DatabaseConnection.connect()) {
-                // Aggiorna la tabella "fruitori"
+                 
                 try (PreparedStatement pstmtFruitori = conn.prepareStatement(sqlFruitore)) {
                     pstmtFruitori.setString(1, nuovaPassword);
-                    pstmtFruitori.setBoolean(2, true); // Imposta password_modificata a true
+                    pstmtFruitori.setBoolean(2, true);  
                     pstmtFruitori.setString(3, email);
                     pstmtFruitori.executeUpdate();
                 }
     
-                // Aggiorna la tabella "utenti_unificati"
+                 
                 try (PreparedStatement pstmtUtenti = conn.prepareStatement(sqlUtentiUnificati)) {
                     pstmtUtenti.setString(1, nuovaPassword);
-                    pstmtUtenti.setBoolean(2, true); // Imposta password_modificata a true
+                    pstmtUtenti.setBoolean(2, true);  
                     pstmtUtenti.setString(3, email);
                     pstmtUtenti.executeUpdate();
                 }

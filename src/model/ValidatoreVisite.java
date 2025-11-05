@@ -297,6 +297,14 @@ public class ValidatoreVisite {
         return dateDisponibili;
     }
 
+    public LocalDate filtraDateDisponibiliSingola(List<Integer> giorniSelezionati, YearMonth ym) {
+        List<LocalDate> dates = filtraDateDisponibili(giorniSelezionati, ym);
+        if (dates.size() == 1) {
+            return dates.get(0);
+        }
+        return null;
+    }
+
     private boolean isTipoVisitaProgrammabileInGiorno(TipiVisitaClass tipoVisita, String giornoSettimana) {
         String giorno = giornoSettimana.trim().toUpperCase();
         if (giorno.equals("SATURDAY") || giorno.equals("SUNDAY")) {

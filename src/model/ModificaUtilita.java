@@ -9,6 +9,7 @@ import java.util.List;
 import src.model.db.ApplicationSettingsDAO;
 import src.model.db.PrenotazioneManager;
 import src.model.db.VisiteManagerDB;
+import src.model.db.VolontariManager;
 import src.controller.LuoghiController;
 import src.controller.VisiteController;
 import src.controller.VolontariController;
@@ -97,6 +98,20 @@ public class ModificaUtilita {
             }
         }
         return ok;
+    }
+
+    public void rimuoviTipoVisitaDaVolontari(List<Volontario> volontari, TipiVisitaClass tipoVisita, VolontariManager volontariManager) {
+        for (Volontario volontario : volontari) {
+            volontariManager.rimuoviTipoVisitaDaVolontario(volontario.getEmail(), tipoVisita);
+        }
+    }
+
+    public void rimuoviVisitaDaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato, VolontariController volontariController) {
+        volontariController.rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato);
+    }
+
+    public void rimuoviTipoDiVisita(TipiVisitaClass tipoDaRimuovere) {
+        visiteManagerDB.rimuoviTipoDiVisita(tipoDaRimuovere);
     }
 
 }

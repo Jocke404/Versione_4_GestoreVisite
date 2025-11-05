@@ -32,7 +32,7 @@ public class ViewUtilita {
     private static final File NUMERO_PERSONE_FILE = new File("src/utility/max_persone_iscrivibili.config");
     private ConcurrentHashMap<Integer, Visita> visiteMap = new VisiteManagerDB(ThreadPoolController.getInstance()).getVisiteMap();
     private final ConsoleIO consoleIO = new ConsoleIO();
-    private List<TipiVisitaClass> tipiVisitaList = new VisiteManagerDB(ThreadPoolController.getInstance()).getTipiVisitaClassList();
+    private List<TipiVisitaClass> tipiVisitaList = VisiteManagerDB.getTipiVisitaClassList();
     
     private static ViewUtilita instance;
 
@@ -244,6 +244,8 @@ public class ViewUtilita {
             return;
         }
 
+        System.out.println(tipiVisitaList);
+
         consoleIO.mostraMessaggio ("VOLONTARI PER TIPO DI VISITA");
 
         for (TipiVisitaClass tipovisita : tipiVisitaList){
@@ -258,49 +260,6 @@ public class ViewUtilita {
                 for (int i=0; i<volontari.size();i++){
                     Volontario v = volontari.get(i);
                     consoleIO.mostraMessaggio((i+1) + ". " + v.getNome() + " " + v.getCognome()); 
-                }
-            }
-        }
-
-    }
-
-    //metodo alternativo per visualizzazione dettagliata di un tipo specifico
-    public void visualizzaVolontariPerTipoVisitaSpecifico(VisiteManagerDB visiteManagerDB, VolontariManager volontariManager){
-        //mostra i tipi di visita disponibili
-        List <TipiVisitaClass> tipiVisitaDisponibili = visiteManagerDB.getTipiVisitaClassList();
-
-        if (tipiVisitaDisponibili.isEmpty()) {
-            consoleIO.mostraMessaggio("Nessun tipo di visita disponibile.");
-            return ;
-        }
-
-        consoleIO.mostraMessaggio ("Seleziona il tipo di visita da visualizzare:");
-        consoleIO.mostraElencoConOggetti(tipiVisitaDisponibili);
-        int tipoIndex = InputDati.leggiIntero ("Seleziona il numero del tipo di visita: ", 1, tipiVisitaDisponibili.size()) -1;
-        TipiVisitaClass tipoVisitaScelto = tipiVisitaDisponibili.get(tipoIndex);
-        
-
-        List<Volontario> volontari = volontariManager.getVolontariPerTipoVisita(tipoVisitaScelto);
-        consoleIO.mostraMessaggio("\nTipo di visita: " + tipoVisitaScelto);
-        consoleIO.mostraMessaggio ("Numero volontari assegnati: " + volontari.size());
-        
-        if (volontari.isEmpty()){
-            consoleIO.mostraMessaggio("Nessun volontario assegnato a questo tipo di visita.");
-        }else{
-            consoleIO.mostraMessaggio ("Volontari assegnati:");
-            consoleIO.mostraElencoConOggetti(volontari);
-
-            //mostra anche gli altri tipi di visita del volontario
-            for (Volontario v : volontari) {
-                if (!v.getTipiDiVisite().isEmpty()) {
-                    consoleIO.mostraMessaggio("   Altri tipi di visita assegnati:");
-                    for (TipiVisitaClass altroTipo : v.getTipiDiVisite()) {
-                        if (!altroTipo.equals(tipoVisitaScelto)) {
-                            consoleIO.mostraMessaggio("   - " + altroTipo);
-                        } else {
-                            consoleIO.mostraMessaggio("   Nessun altro tipo di visita assegnato.");
-                        }
-                    }
                 }
             }
         }

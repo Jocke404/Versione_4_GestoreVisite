@@ -5,9 +5,11 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+import lib.InputDati;
 import src.model.AggiuntaUtilita;
 import src.model.Disponibilita;
 import src.model.ValidatoreVisite;
+import src.model.Visita;
 import src.model.Volontario;
 import src.view.ConsoleIO;
 import src.view.ViewUtilita;
@@ -31,6 +33,13 @@ public class VolontariController {
         this.volontarioCorrente = volontarioCorrente;
         this.validatore = validatore;
         this.viewUtilita = viewUtilita;
+        
+        // sincronizza le disponibilità in memoria con il DB usando le istanze Volontario del manager
+        try {
+            this.disponibilita.sincronizzaDisponibilitaVolontari(this.volontariManager);
+        } catch (Exception e) {
+            System.err.println("Errore sincronizzazione disponibilità: " + e.getMessage());
+        }
     }
 
     public void raccogliDisponibilitaVolontario() {
@@ -48,7 +57,26 @@ public class VolontariController {
         consoleIO.mostraCalendarioMese(ym, giorniDisponibili);
         List<Integer> giorniSelezionati = consoleIO.chiediGiorniDisponibili(ym, new ArrayList<>(giorniDisponibili));
         List<LocalDate> dateDisponibili = validatore.filtraDateDisponibili(giorniSelezionati, ym);
-        disponibilita.salvaDisponibilita(volontarioCorrente, dateDisponibili, volontariManager);
+        
+        // Se non sono state selezionate date, esci
+        if (dateDisponibili == null || dateDisponibili.isEmpty()) {
+            consoleIO.mostraMessaggio("Nessuna data selezionata. Operazione annullata.");
+            return;
+        }
+
+        // Controlla se esistono già disponibilità per il volontario
+        List<LocalDate> esistenti = disponibilita.getDisponibilitaVolontario(volontarioCorrente);
+        boolean hasEsistenti = esistenti != null && !esistenti.isEmpty();
+
+        if (hasEsistenti) {
+            consoleIO.mostraMessaggio("Trovate disponibilità precedenti: le nuove date verranno aggiunte (no duplicati).");
+            // merge = true -> aggiunge le nuove date a quelle esistenti evitando duplicati
+            disponibilita.salvaDisponibilita(volontarioCorrente, dateDisponibili, volontariManager, true);
+        } else {
+            consoleIO.mostraMessaggio("Nessuna disponibilità precedente: verranno create le nuove disponibilità.");
+            // merge = false -> sostituisce / crea le disponibilità
+            disponibilita.salvaDisponibilita(volontarioCorrente, dateDisponibili, volontariManager, false);
+        }
     }
     
     public void visualizzaVisiteVolontario(){
@@ -81,4 +109,35 @@ public class VolontariController {
         volontariManager.modificaPsw(volontarioCorrente.getEmail(), nuovaPassword);
     }
 
+    
+    public void modificaDisponibilitaVolontario() {
+        LocalDate oggi = LocalDate.now();
+        if (oggi.getDayOfMonth() > 15) {
+            consoleIO.mostraMessaggio("Non è possibile modificare le disponibilità dopo il 15 del mese corrente.");
+            return;
+        }
+        List<LocalDate> disponibilitaEsistenti = disponibilita.getDisponibilitaVolontario(volontarioCorrente);
+        if (disponibilitaEsistenti == null || disponibilitaEsistenti.isEmpty()) {
+            consoleIO.mostraMessaggio("Non ci sono disponibilità da modificare.");
+            return;
+        }
+
+        YearMonth ym = YearMonth.now().plusMonths(1);
+        List<Integer> giorniDisponibili = validatore.trovaGiorniDisponibili(volontarioCorrente, ym);
+        consoleIO.mostraDisponibilitaEsistenti(disponibilitaEsistenti);
+        List<LocalDate> disponibilitaEsistentiMod = consoleIO.chiediNuoveDisponibilita(disponibilitaEsistenti, giorniDisponibili, validatore);
+        if (disponibilitaEsistentiMod == null) {
+            consoleIO.mostraMessaggio("Nessuna modifica effettuata.");
+            return;
+        }
+
+        if(InputDati.yesOrNo("Confermi le modifiche alle disponibilità?: ")) {
+            disponibilita.salvaDisponibilita(volontarioCorrente, disponibilitaEsistentiMod, 
+                                                volontariManager, false);
+        }
+    }
+
+    public void rimuoviVisitaDaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
+        volontariManager.rimuoviVisitaVolontario(visitaSelezionata, volontarioSelezionato);
+    }
 }

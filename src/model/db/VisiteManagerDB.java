@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -218,6 +219,94 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
+        protected void rimuoviTipoDiVisitaDB(TipiVisitaClass tipoDaRimuovere) {
+        String sqlSelectLuoghi = "SELECT nome, tipi_di_visita FROM luoghi WHERE tipi_di_visita LIKE ?";
+        String sqlUpdateLuoghi = "UPDATE luoghi SET tipi_di_visita = ? WHERE nome = ?";
+        String sqlSelectVolontari = "SELECT id, tipi_di_visite FROM volontari WHERE tipi_di_visite LIKE ?";
+        String sqlUpdateVolontari = "UPDATE volontari SET tipi_di_visite = ? WHERE id = ?";
+        String sqlTipiVisita = "DELETE FROM tipi_visita WHERE nome = ?";
+        String sqlVisite = "UPDATE visite SET stato = ? WHERE tipo_visita = ?";
+        executorService.submit(() -> {
+            try (Connection conn = DatabaseConnection.connect();
+                 PreparedStatement pstmtSelectLuoghi = conn.prepareStatement(sqlSelectLuoghi);
+                 PreparedStatement pstmtUpdateLuoghi = conn.prepareStatement(sqlUpdateLuoghi);
+                 PreparedStatement pstmtSelectVolontari = conn.prepareStatement(sqlSelectVolontari);
+                 PreparedStatement pstmtUpdateVolontari = conn.prepareStatement(sqlUpdateVolontari);
+                 PreparedStatement pstmtTipiVisita = conn.prepareStatement(sqlTipiVisita);
+                 PreparedStatement pstmtVisite = conn.prepareStatement(sqlVisite)) {
+
+                // Rimuovi il tipo dalla lista comma-separated dei luoghi
+                pstmtSelectLuoghi.setString(1, "%" + tipoDaRimuovere.getNome() + "%");
+                try (ResultSet rs = pstmtSelectLuoghi.executeQuery()) {
+                    while (rs.next()) {
+                        String luogoNome = rs.getString("nome");
+                        String tipi = rs.getString("tipi_di_visita");
+                        if (tipi == null) continue;
+
+                        String[] parts = tipi.split("\\s*,\\s*");
+                        List<String> keep = new ArrayList<>();
+                        for (String p : parts) {
+                            if (!p.equalsIgnoreCase(tipoDaRimuovere.getNome()) && !p.trim().isEmpty()) {
+                                keep.add(p.trim());
+                            }
+                        }
+                        String newVal = keep.isEmpty() ? null : String.join(", ", keep);
+
+                        if (newVal == null) {
+                            pstmtUpdateLuoghi.setNull(1, java.sql.Types.VARCHAR);
+                        } else {
+                            pstmtUpdateLuoghi.setString(1, newVal);
+                        }
+                        pstmtUpdateLuoghi.setString(2, luogoNome);
+                        pstmtUpdateLuoghi.executeUpdate();
+                    }
+                }
+
+                // Rimuovi il tipo dalla lista comma-separated dei volontari
+                pstmtSelectVolontari.setString(1, "%" + tipoDaRimuovere.getNome() + "%");
+                try (ResultSet rs = pstmtSelectVolontari.executeQuery()) {
+                    while (rs.next()) {
+                        int volontarioId = rs.getInt("id");
+                        String tipi = rs.getString("tipi_di_visite");
+                        if (tipi == null) continue;
+
+                        String[] parts = tipi.split("\\s*,\\s*");
+                        List<String> keep = new ArrayList<>();
+                        for (String p : parts) {
+                            if (!p.equalsIgnoreCase(tipoDaRimuovere.getNome()) && !p.trim().isEmpty()) {
+                                keep.add(p.trim());
+                            }
+                        }
+                        String newVal = keep.isEmpty() ? null : String.join(", ", keep);
+
+                        if (newVal == null) {
+                            pstmtUpdateVolontari.setNull(1, java.sql.Types.VARCHAR);
+                        } else {
+                            pstmtUpdateVolontari.setString(1, newVal);
+                        }
+                        pstmtUpdateVolontari.setInt(2, volontarioId);
+                        pstmtUpdateVolontari.executeUpdate();
+                    }
+                }
+
+                // Imposta lo stato di tutte le visite corrispondenti a "CANCELLATA"
+                pstmtVisite.setString(1, "CANCELLATA");
+                pstmtVisite.setString(2, tipoDaRimuovere.getNome());
+                pstmtVisite.executeUpdate();
+
+                // Rimuovi dalla tabella tipi_visita
+                pstmtTipiVisita.setString(1, tipoDaRimuovere.getNome());
+                pstmtTipiVisita.executeUpdate();
+
+                // Ricarica cache visite
+                caricaVisite();
+
+            } catch (SQLException e) {
+                System.err.println("Errore durante la rimozione del tipo di visita: " + e.getMessage());
+            }
+        });
+    }
+
     public void addNuovoTipoVisita(TipiVisitaClass nuovoTipo) {
         String verificaSql = "SELECT 1 FROM tipi_visita WHERE nome = ?";
         if(!recordEsiste(verificaSql, nuovoTipo.getNome())){
@@ -294,11 +383,23 @@ public class VisiteManagerDB extends DatabaseManager {
         return visiteMap;
     }
 
-    public List<TipiVisitaClass> getTipiVisitaClassList() {
-        return List.of(visiteMap.values().stream()
-                .flatMap(v -> v.getTipiVisitaClass().stream())
-                .distinct()
-                .toArray(TipiVisitaClass[]::new));
+    public static List<TipiVisitaClass> getTipiVisitaClassList() {
+        List<TipiVisitaClass> listTipiVisite = new ArrayList<>();
+        String sql = "SELECT nome, descrizione FROM tipi_visita";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String nome = rs.getString("nome");
+                String descrizione = rs.getString("descrizione");
+                TipiVisitaClass tipoVisita = new TipiVisitaClass(nome, descrizione);
+                listTipiVisite.add(tipoVisita);
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore durante il recupero dei tipi di visita: " + e.getMessage());
+        }
+        return listTipiVisite;
     }
 
     public ConcurrentHashMap<LocalDate, String> getDatePrecluseMap() {
@@ -325,4 +426,10 @@ public class VisiteManagerDB extends DatabaseManager {
     public void assegnaVisitaAVolontario(Volontario volontarioSelezionato, Visita visitaSelezionata) {
         assegnaVisitaAVolontarioDB(volontarioSelezionato, visitaSelezionata);
     }
+
+    public void rimuoviTipoDiVisita(TipiVisitaClass tipoDaRimuovere) {
+        rimuoviTipoDiVisitaDB(tipoDaRimuovere);
+    }
+
+
 }

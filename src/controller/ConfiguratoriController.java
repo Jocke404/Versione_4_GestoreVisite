@@ -306,7 +306,7 @@ public class ConfiguratoriController {
         consoleIO.mostraMessaggio("Tipo di visita " + tipoVisitaScelto + " assegnato a " + volontariSelezionati.size() + " volontari.");
     }
 
-    public void rimuoviVolontariDaTipoVisita() {
+    public void rimuoviTipoVisitaDaVolontari() {
         if (consoleIO.chiediAnnullaOperazione()) return;
 
         Map<String, Volontario> volontariMap = volontariManager.getVolontariMap();
@@ -328,7 +328,7 @@ public class ConfiguratoriController {
         }
         List<Volontario> volontariSelezionati = consoleIO.chiediVolontariMultipli(volontariConTipoVisita);
 
-        addUtilita.rimuoviTipoVisitaDaVolontari(volontariSelezionati, tipoVisitaScelto);
+        modificaUtilita.rimuoviTipoVisitaDaVolontari(volontariSelezionati, tipoVisitaScelto, volontariManager);
         consoleIO.mostraMessaggio("Tipo di visita " + tipoVisitaScelto + " rimosso da " + volontariSelezionati.size() + " volontari.");
     }
 
@@ -406,7 +406,7 @@ public class ConfiguratoriController {
         int sceltaVolontario = consoleIO.chiediSelezioneVolontario(volontari);
         Volontario volontarioSelezionato = volontari.get(sceltaVolontario);
         if (!consoleIO.chiediAnnullaOperazione()) {
-            //addUtilita.rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato);
+            modificaUtilita.rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato, volontariController);
             consoleIO.mostraRisultatoAggiornamentoVisitaVolontario(true);
         } else {
             consoleIO.mostraMessaggio("Operazione annullata.");
@@ -419,6 +419,21 @@ public class ConfiguratoriController {
         if (nuovoTipo != null && InputDati.yesOrNo("Vuoi confermare e aggiungere il nuovo tipo di visita?")) {
             addUtilita.aggiungiNuovoTipoVisita(nuovoTipo);
             consoleIO.mostraMessaggio("Nuovo tipo di visita aggiunto con successo.");
+        } else {
+            consoleIO.mostraMessaggio("Operazione annullata.");
+        }
+    }
+
+    public void rimuoviTipoDiVisita() {
+        List<TipiVisitaClass> tipiVisitaList = VisiteManagerDB.getTipiVisitaClassList();
+        if (tipiVisitaList.isEmpty()) {
+            consoleIO.mostraMessaggio("Nessun tipo di visita disponibile per la rimozione.");
+            return;
+        }
+        TipiVisitaClass tipoDaRimuovere = consoleIO.chiediTipoVisita(tipiVisitaList);
+        if (consoleIO.chiediConfermaRimozioneTipoVisita(tipoDaRimuovere)) {
+            modificaUtilita.rimuoviTipoDiVisita(tipoDaRimuovere);
+            consoleIO.mostraMessaggio("Tipo di visita rimosso con successo.");
         } else {
             consoleIO.mostraMessaggio("Operazione annullata.");
         }

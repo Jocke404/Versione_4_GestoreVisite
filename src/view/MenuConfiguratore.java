@@ -25,10 +25,12 @@ public class MenuConfiguratore implements Menu {
     };
 
     private static final String [] SOTTOMENU_VISITE={
-        "Aggiungi Visita", "Visualizza Visite", 
+        "Aggiungi Visita", "Aggiungi nuovo tipo di visita", "Visualizza Visite",
         "Modifica stato della visita", "Modifica data della visita",  
-        "Visualizza visite per stato", "Visualizza archivio storico", 
-        "Elimina Visita", "Assegna Visita a Volontario"
+        "Visualizza visite per stato", "Visualizza archivio storico",
+        "Elimina Visita", "Assegna Visita a Volontario", 
+        "Rimuovi Visita da Volontario",
+        "Rimuovi tipo di visita"
     };
 
     private static final String [] SOTTOMENU_LUOGHI={
@@ -115,14 +117,18 @@ public class MenuConfiguratore implements Menu {
 
             switch (sceltaSottomenu){
                 case 1 -> configuratoriController.aggiungiVisita();
-                case 2 -> configuratoriController.mostraVisite();
-                case 3 -> configuratoriController.modificaStatoVisita();
-                case 4 -> configuratoriController.modificaDataVisita();
-                case 5 -> configuratoriController.visualizzaVisitePerStato();
-                case 6 -> configuratoriController.visualizzaArchivioStorico();
-                case 7 -> configuratoriController.eliminaVisita();
-                case 8 -> configuratoriController.assegnaVisitaAVolontario();
-                case 9 -> configuratoriController.rimuoviVisitaDaVolontario();
+                case 2 -> configuratoriController.aggiungiNuovoTipoVisita();
+                case 3 -> configuratoriController.mostraVisite();
+                case 4 -> configuratoriController.modificaStatoVisita();
+                case 5 -> configuratoriController.modificaDataVisita();
+                case 6 -> configuratoriController.visualizzaVisitePerStato();
+                case 7 -> configuratoriController.visualizzaArchivioStorico();
+                case 8 -> configuratoriController.eliminaVisita();
+                case 9 -> configuratoriController.assegnaVisitaAVolontario();
+                case 10 -> configuratoriController.rimuoviVisitaDaVolontario();
+                case 11 -> configuratoriController.rimuoviTipoDiVisita();
+
+
 
                 case 0 -> tornaIndietro = true;
                 default -> System.out.println("Opzione non valida.");
@@ -141,7 +147,7 @@ public class MenuConfiguratore implements Menu {
             switch (sceltaSottomenu){
                 case 1 -> configuratoriController.aggiungiVolontario();
                 case 2 -> configuratoriController.aggiungiVolontariATipoVisita();
-                case 3 -> configuratoriController.rimuoviVolontariDaTipoVisita();
+                case 3 -> configuratoriController.rimuoviTipoVisitaDaVolontari();
                 case 4 -> configuratoriController.mostraVolontari();
                 case 5 -> configuratoriController.visualizzaVolontariPerTipoVisita();
                 case 6 -> configuratoriController.eliminaVolontario();

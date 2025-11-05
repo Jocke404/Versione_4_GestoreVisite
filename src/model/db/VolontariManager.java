@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import src.controller.ThreadPoolController;
 import src.model.TipiVisitaClass;
+import src.model.Visita;
 import src.model.Volontario;
 
 public class VolontariManager extends DatabaseManager {
@@ -196,6 +197,25 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
+    protected void rimuoviVisitaDaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
+        String sql = "DELETE FROM visite WHERE id = ? AND volontario_id = ?";
+        executorService.submit(() -> {
+            try (Connection conn = DatabaseConnection.connect();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, visitaSelezionata.getId());
+                pstmt.setInt(2, getIdByEmail(volontarioSelezionato.getEmail()));
+                int rowsDeleted = pstmt.executeUpdate();
+                if (rowsDeleted > 0) {
+                    consoleIO.mostraMessaggio("Visita rimossa con successo dal volontario " + volontarioSelezionato.getEmail());
+                } else {
+                    consoleIO.mostraMessaggio("Nessuna visita trovata per il volontario specificato.");
+                }
+            } catch (SQLException e) {
+                System.err.println("Errore durante la rimozione della visita dal volontario: " + e.getMessage());
+            }
+        });
+    }
+
     // metodo per aggiungere un tipo di visita a un volontaro
     public void aggiungiTipoVisitaAVolontari (String email, TipiVisitaClass tipoVisita){
         synchronized (volontariMap){
@@ -212,7 +232,7 @@ public class VolontariManager extends DatabaseManager {
 
     //metodo per rimuovere tipi di visita da un volontario
     public void rimuoviTipiVisitaClassVolontario (String email, List<TipiVisitaClass> tipiVisitaDaRimuovere){
-        String sql = "UPDATE volontari SET tipi_visita = ? WHERE email = ?";
+        String sql = "UPDATE volontari SET tipi_di_visite = ? WHERE email = ?";
         executorService.submit(() -> {
             try (Connection conn= DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(sql)){
@@ -321,5 +341,10 @@ public class VolontariManager extends DatabaseManager {
         }
         return null;
     }
+
+    public void rimuoviVisitaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
+        rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato);
+    }
+
 
 }

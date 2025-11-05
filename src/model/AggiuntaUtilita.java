@@ -105,13 +105,6 @@ public class AggiuntaUtilita {
         }
     }
 
-
-    public void rimuoviTipoVisitaDaVolontari(List<Volontario> volontari, TipiVisitaClass tipoVisita) {
-        for (Volontario volontario : volontari) {
-            volontariManager.rimuoviTipoVisitaDaVolontario(volontario.getEmail(), tipoVisita);
-        }
-    }
-
     public void assegnaVisitaAVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
         visiteManagerDB.assegnaVisitaAVolontario(volontarioSelezionato, visitaSelezionata);
     }

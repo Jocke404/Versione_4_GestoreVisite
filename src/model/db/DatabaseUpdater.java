@@ -128,9 +128,6 @@ public class DatabaseUpdater {
         }
     }
 
-    
-
-
 //Getters e Setters--------------------------------------------------
     public String getTipoUtente(String email, String password){
         String tipo_utente = null;

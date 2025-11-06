@@ -15,22 +15,46 @@ import src.model.TipiVisitaClass;
 import src.model.Visita;
 import src.model.Volontario;
 
+/**
+ * Gestisce le operazioni CRUD per le visite nel database.
+ * Mantiene cache in memoria per visite, date precluse e tipi di visita.
+ * Fornisce metodi per gestire tutto il ciclo di vita delle visite guidate.
+ * 
+ */
 public class VisiteManagerDB extends DatabaseManager {
+    /** Mappa concorrente delle visite indicizzata per ID */
     private ConcurrentHashMap<Integer, Visita> visiteMap = new ConcurrentHashMap<>();
+    
+    /** Mappa delle date in cui non è possibile organizzare visite */
     private ConcurrentHashMap<LocalDate, String> datePrecluseMap = new ConcurrentHashMap<>();
 
+    /**
+     * Costruttore del manager delle visite.
+     * Carica visite e date precluse dal database.
+     * 
+     * @param threadPoolManager il controller del thread pool
+     */
     public VisiteManagerDB(ThreadPoolController threadPoolManager) {
         super(threadPoolManager);
         caricaVisite();
         caricaDatePrecluse();
     }
 
+    /**
+     * Restituisce un'istanza singleton del manager delle visite.
+     * 
+     * @return istanza singleton di VisiteManagerDB
+     */
     public static VisiteManagerDB getInstance() {
         return new VisiteManagerDB(ThreadPoolController.getInstance());
     }
 
     //Logiche delle visite--------------------------------------------------
-     
+    
+    /**
+     * Carica tutte le visite dal database nella mappa in memoria.
+     * Svuota la mappa esistente e la riempie con i dati aggiornati.
+     */
     protected void caricaVisite() {
         String sql = "SELECT id, titolo, luogo, tipo_visita, volontario, data, stato, max_persone, ora_inizio, durata_minuti, posti_prenotati, min_partecipanti, biglietto, barriere_architettoniche FROM visite";
         try (Connection conn = DatabaseConnection.connect();
@@ -67,7 +91,11 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
-     
+    /**
+     * Aggiunge una nuova visita al database.
+     * 
+     * @param visita la visita da aggiungere
+     */
     protected void aggiungiVisita(Visita visita) {
         String inserisciSql = "INSERT INTO visite (luogo, titolo, tipo_visita, volontario, data, stato, max_persone, ora_inizio, durata_minuti, min_partecipanti, biglietto, barriere_architettoniche) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -94,6 +122,11 @@ public class VisiteManagerDB extends DatabaseManager {
             }
     }
 
+    /**
+     * Aggiunge un nuovo tipo di visita al database in modo asincrono.
+     * 
+     * @param nuovoTipo il nuovo tipo di visita da aggiungere
+     */
     protected void aggiungiNuovoTipoVisita(TipiVisitaClass nuovoTipo) {
         String sql = "INSERT INTO tipi_visita (nome, descrizione) VALUES (?, ?)";
         executorService.submit(() -> {
@@ -109,6 +142,13 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
+    /**
+     * Aggiunge una data preclusa al database in modo asincrono.
+     * Le date precluse sono giorni in cui non è possibile organizzare visite.
+     * 
+     * @param data la data da precludere
+     * @param motivo il motivo della preclusione
+     */
     protected void aggiungiDataPreclusa(LocalDate data, String motivo) {
         String sql = "INSERT INTO date_precluse (data, motivo) VALUES (?, ?)";
         executorService.submit(() -> {
@@ -128,6 +168,10 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
+    /**
+     * Carica tutte le date precluse dal database nella mappa in memoria.
+     * Svuota la mappa esistente e la riempie con i dati aggiornati.
+     */
     protected void caricaDatePrecluse() {
         String sql = "SELECT data, motivo FROM date_precluse";
         try (Connection conn = DatabaseConnection.connect();
@@ -147,6 +191,11 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
+    /**
+     * Elimina una data preclusa dal database in modo asincrono.
+     * 
+     * @param dataDaEliminare la data da rimuovere dalle date precluse
+     */
     protected void eliminaDataPreclusa(LocalDate dataDaEliminare) {
         String sql = "DELETE FROM date_precluse WHERE data = ?";
         executorService.submit(() -> {
@@ -166,7 +215,12 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
-     
+    /**
+     * Aggiorna i dati di una visita esistente nel database in modo asincrono.
+     * 
+     * @param visitaId l'ID della visita da aggiornare
+     * @param visitaAggiornata la visita con i dati aggiornati
+     */
     protected void aggiornaVisitaDB(int visitaId, Visita visitaAggiornata) {
         String sql = "UPDATE visite SET luogo = ?, tipo_visita = ?, volontario = ?, data = ?, stato = ?, max_persone = ?, ora_inizio = ?, durata_minuti = ? WHERE id = ?";
         executorService.submit(() -> {
@@ -188,6 +242,12 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
+    /**
+     * Assegna una visita a un volontario nel database in modo asincrono.
+     * 
+     * @param volontarioSelezionato il volontario a cui assegnare la visita
+     * @param visitaSelezionata la visita da assegnare
+     */
     protected void assegnaVisitaAVolontarioDB(Volontario volontarioSelezionato, Visita visitaSelezionata) {
         String sql = "UPDATE visite SET volontario = ? WHERE id = ?";
         executorService.submit(() -> {
@@ -204,7 +264,11 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
-     
+    /**
+     * Aggiorna il numero massimo di persone per tutte le visite in modo asincrono.
+     * 
+     * @param maxPersonePerVisita il nuovo numero massimo di persone
+     */
     protected void aggiornaMaxPersonePerVisita(int maxPersonePerVisita) {
         String sql = "UPDATE visite SET max_persone = ?";
         executorService.submit(() -> {
@@ -219,7 +283,14 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
-        protected void rimuoviTipoDiVisitaDB(TipiVisitaClass tipoDaRimuovere) {
+    /**
+     * Rimuove un tipo di visita dal sistema aggiornando luoghi, volontari e visite.
+     * Cancella le visite associate e rimuove il tipo dai luoghi e dai volontari.
+     * Operazione eseguita in modo asincrono.
+     * 
+     * @param tipoDaRimuovere il tipo di visita da rimuovere
+     */
+    protected void rimuoviTipoDiVisitaDB(TipiVisitaClass tipoDaRimuovere) {
         String sqlSelectLuoghi = "SELECT nome, tipi_di_visita FROM luoghi WHERE tipi_di_visita LIKE ?";
         String sqlUpdateLuoghi = "UPDATE luoghi SET tipi_di_visita = ? WHERE nome = ?";
         String sqlSelectVolontari = "SELECT id, tipi_di_visite FROM volontari WHERE tipi_di_visite LIKE ?";
@@ -307,6 +378,11 @@ public class VisiteManagerDB extends DatabaseManager {
         });
     }
 
+    /**
+     * Aggiunge un nuovo tipo di visita verificando prima che non esista già.
+     * 
+     * @param nuovoTipo il nuovo tipo di visita da aggiungere
+     */
     public void addNuovoTipoVisita(TipiVisitaClass nuovoTipo) {
         String verificaSql = "SELECT 1 FROM tipi_visita WHERE nome = ?";
         if(!recordEsiste(verificaSql, nuovoTipo.getNome())){
@@ -317,6 +393,11 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
+    /**
+     * Aggiunge una nuova visita verificando prima che non esista già.
+     * 
+     * @param nuovaVisita la nuova visita da aggiungere
+     */
     public void aggiungiNuovaVisita(Visita nuovaVisita) {
         String verificaSql = "SELECT 1 FROM visite WHERE luogo = ? AND data = ? AND volontario = ? AND ora_inizio = ?";
         if(!recordEsiste(verificaSql, nuovaVisita.getLuogo(), nuovaVisita.getData(), nuovaVisita.getVolontario(), nuovaVisita.getOraInizio())){
@@ -328,6 +409,12 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
+    /**
+     * Aggiunge una nuova data preclusa verificando prima che non esista già.
+     * 
+     * @param data la data da precludere
+     * @param motivo il motivo della preclusione
+     */
     public void aggiungiNuovaDataPreclusa(LocalDate data, String motivo) {
         String verificaSql = "SELECT 1 FROM date_precluse WHERE data = ?";
         if(!recordEsiste(verificaSql, data)){
@@ -338,7 +425,11 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
-     
+    /**
+     * Recupera il numero massimo predefinito di persone per visita dal database.
+     * 
+     * @return il numero massimo di persone, o 10 se non trovato
+     */
     protected int getMaxPersoneDefault() {
         String sql = "SELECT max_persone FROM visite";
         try (Connection conn = DatabaseConnection.connect();
@@ -354,6 +445,12 @@ public class VisiteManagerDB extends DatabaseManager {
         return 10;
     }    
     
+    /**
+     * Elimina una visita dal database.
+     * 
+     * @param visitaId l'ID della visita da eliminare
+     * @return true se l'eliminazione è andata a buon fine, false altrimenti
+     */
     protected boolean eliminaVisitaDB(int visitaId){
         String sql = "DELETE FROM visite WHERE id = ?";
         try (Connection conn = DatabaseConnection.connect();
@@ -375,14 +472,29 @@ public class VisiteManagerDB extends DatabaseManager {
         }
     }
 
+    /**
+     * Restituisce il numero massimo di persone per visita.
+     * 
+     * @return il numero massimo di persone
+     */
     public int getMaxPersone() {
         return getMaxPersoneDefault();
     }
 
+    /**
+     * Restituisce la mappa di tutte le visite.
+     * 
+     * @return la mappa concorrente delle visite indicizzata per ID
+     */
     public ConcurrentHashMap<Integer, Visita> getVisiteMap() {
         return visiteMap;
     }
 
+    /**
+     * Recupera tutti i tipi di visita disponibili dal database.
+     * 
+     * @return lista di tutti i tipi di visita
+     */
     public static List<TipiVisitaClass> getTipiVisitaClassList() {
         List<TipiVisitaClass> listTipiVisite = new ArrayList<>();
         String sql = "SELECT nome, descrizione FROM tipi_visita";
@@ -402,31 +514,68 @@ public class VisiteManagerDB extends DatabaseManager {
         return listTipiVisite;
     }
 
+    /**
+     * Restituisce la mappa delle date precluse.
+     * 
+     * @return la mappa concorrente delle date precluse con relativi motivi
+     */
     public ConcurrentHashMap<LocalDate, String> getDatePrecluseMap() {
         return datePrecluseMap;
     }
 
+    /**
+     * Elimina una data dalle date precluse.
+     * 
+     * @param data la data da eliminare
+     */
     public void eliminaData(LocalDate data){
         eliminaDataPreclusa(data);
         datePrecluseMap.remove(data);
     }
 
+    /**
+     * Aggiorna una visita esistente.
+     * 
+     * @param visitaId l'ID della visita da aggiornare
+     * @param visitaAggiornata la visita con i dati aggiornati
+     */
     public void aggiornaVisita(int visitaId, Visita visitaAggiornata){
         aggiornaVisitaDB(visitaId, visitaAggiornata);
     }
 
+    /**
+     * Aggiorna il numero massimo di persone per tutte le visite.
+     * 
+     * @param numeroMax il nuovo numero massimo di persone
+     */
     public void aggiornaMaxPersone(int numeroMax) {
         aggiornaMaxPersonePerVisita(numeroMax);
     }
     
+    /**
+     * Elimina una visita dal sistema.
+     * 
+     * @param visita la visita da eliminare
+     */
     public void eliminaVisita(Visita visita){
         eliminaVisitaDB(visita.getId());
     }
 
+    /**
+     * Assegna una visita a un volontario.
+     * 
+     * @param volontarioSelezionato il volontario a cui assegnare la visita
+     * @param visitaSelezionata la visita da assegnare
+     */
     public void assegnaVisitaAVolontario(Volontario volontarioSelezionato, Visita visitaSelezionata) {
         assegnaVisitaAVolontarioDB(volontarioSelezionato, visitaSelezionata);
     }
 
+    /**
+     * Rimuove un tipo di visita dal sistema.
+     * 
+     * @param tipoDaRimuovere il tipo di visita da rimuovere
+     */
     public void rimuoviTipoDiVisita(TipiVisitaClass tipoDaRimuovere) {
         rimuoviTipoDiVisitaDB(tipoDaRimuovere);
     }

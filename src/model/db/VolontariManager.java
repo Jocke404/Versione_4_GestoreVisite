@@ -16,16 +16,32 @@ import src.model.TipiVisitaClass;
 import src.model.Visita;
 import src.model.Volontario;
 
+/**
+ * Gestisce le operazioni CRUD per i volontari nel database.
+ * Mantiene una cache sincronizzata dei volontari e gestisce
+ * le loro disponibilità e tipi di visita supportati.
+ * 
+ */
 public class VolontariManager extends DatabaseManager {
 
+    /** Mappa concorrente dei volontari indicizzata per email */
     private ConcurrentHashMap<String, Volontario> volontariMap = new ConcurrentHashMap<>();
 
+    /**
+     * Costruttore del manager dei volontari.
+     * Inizializza il thread pool e carica i volontari dal database.
+     * 
+     * @param threadPoolManager il controller del thread pool
+     */
     public VolontariManager(ThreadPoolController threadPoolManager) {
         super(threadPoolManager);
         caricaVolontari();
     }
 
-     
+    /**
+     * Sincronizza i dati dei volontari in memoria con il database.
+     * Aggiunge e aggiorna tutti i volontari presenti nella mappa.
+     */
     public void sincronizzaVolontari() {
         for (Volontario volontario : volontariMap.values()) {
             aggiungiVolontario(volontario);
@@ -34,7 +50,10 @@ public class VolontariManager extends DatabaseManager {
         consoleIO.mostraMessaggio("Sincronizzazione dei volontari completata.");
     }
 
-     
+    /**
+     * Carica tutti i volontari dal database nella mappa in memoria.
+     * Svuota la mappa esistente e la riempie con i dati aggiornati.
+     */
     protected void caricaVolontari() {
         String sql = "SELECT nome, cognome, email, password, tipi_di_visite FROM volontari";
         try (Connection conn = DatabaseConnection.connect();
@@ -67,7 +86,12 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-     
+    /**
+     * Aggiunge un nuovo volontario al database.
+     * Inserisce il volontario sia nella tabella volontari che nella tabella utenti_unificati.
+     * 
+     * @param volontario il volontario da aggiungere
+     */
     protected void aggiungiVolontario(Volontario volontario) {
         String inserisciSqlVolontari = "INSERT INTO volontari (nome, cognome, email, password, tipi_di_visite, password_modificata) VALUES (?, ?, ?, ?, ?, ?)";
     
@@ -89,7 +113,13 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-     
+    /**
+     * Aggiorna la password di un volontario nel database in modo asincrono.
+     * Aggiorna sia la tabella volontari che la tabella utenti_unificati.
+     * 
+     * @param email l'email del volontario
+     * @param nuovaPassword la nuova password
+     */
     protected void aggiornaPswVolontario(String email, String nuovaPassword) {
         String sqlVolontari = "UPDATE volontari SET password = ?, password_modificata = ? WHERE email = ?";
         String sqlUtentiUnificati = "UPDATE utenti_unificati SET password = ?, password_modificata = ? WHERE email = ?";
@@ -119,6 +149,12 @@ public class VolontariManager extends DatabaseManager {
         });
     }    
     
+    /**
+     * Elimina un volontario dal database in modo asincrono.
+     * Rimuove il volontario sia dalla tabella volontari che dalla tabella utenti_unificati.
+     * 
+     * @param volontarioDaEliminare il volontario da eliminare
+     */
     private void eliminaVol(Volontario volontarioDaEliminare) {
         String sqlVolontari = "DELETE FROM volontari WHERE email = ?";
         String sqlUtentiUnificati = "DELETE FROM utenti_unificati WHERE email = ?";
@@ -141,6 +177,12 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
+    /**
+     * Aggiorna la disponibilità di un volontario nel database in modo asincrono.
+     * 
+     * @param email l'email del volontario
+     * @param disponibilita la nuova disponibilità
+     */
     public void aggiornaDisponibilitaVolontario(String email, String disponibilita) {
         String sql = "UPDATE volontari SET disponibilita = ? WHERE email = ?";
         executorService.submit(() -> {
@@ -160,6 +202,11 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
+    /**
+     * Aggiunge un nuovo volontario verificando prima che non esista già.
+     * 
+     * @param nuovoVolontario il nuovo volontario da aggiungere
+     */
     public void aggiungiNuovoVolontario(Volontario nuovoVolontario) {
         String verificaSql = "SELECT 1 FROM volontari WHERE email = ?";
         if(!recordEsiste(verificaSql, nuovoVolontario.getEmail())){
@@ -170,7 +217,12 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-         
+    /**
+     * Aggiorna i tipi di visita supportati da un volontario in modo asincrono.
+     * 
+     * @param email l'email del volontario
+     * @param nuoviTipiVisitaClass la nuova lista di tipi di visita supportati
+     */
     protected void aggiornaTipiVisitaClassVolontario(String email, List<TipiVisitaClass> nuoviTipiVisitaClass) {
         String sql= "UPDATE volontari SET tipi_di_visite = ? WHERE email = ?";
         executorService.submit(() -> {
@@ -197,6 +249,12 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
+    /**
+     * Rimuove una visita assegnata a un volontario in modo asincrono.
+     * 
+     * @param visitaSelezionata la visita da rimuovere
+     * @param volontarioSelezionato il volontario da cui rimuovere la visita
+     */
     protected void rimuoviVisitaDaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
         String sql = "DELETE FROM visite WHERE id = ? AND volontario_id = ?";
         executorService.submit(() -> {
@@ -216,7 +274,12 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
-     
+    /**
+     * Aggiunge un tipo di visita ai tipi supportati da un volontario.
+     * 
+     * @param email l'email del volontario
+     * @param tipoVisita il tipo di visita da aggiungere
+     */
     public void aggiungiTipoVisitaAVolontari (String email, TipiVisitaClass tipoVisita){
         synchronized (volontariMap){
             Volontario volontario = volontariMap.get(email);
@@ -230,7 +293,12 @@ public class VolontariManager extends DatabaseManager {
         }
     }
 
-     
+    /**
+     * Rimuove uno o più tipi di visita dai tipi supportati da un volontario in modo asincrono.
+     * 
+     * @param email l'email del volontario
+     * @param tipiVisitaDaRimuovere la lista dei tipi di visita da rimuovere
+     */
     public void rimuoviTipiVisitaClassVolontario (String email, List<TipiVisitaClass> tipiVisitaDaRimuovere){
         String sql = "UPDATE volontari SET tipi_di_visite = ? WHERE email = ?";
         executorService.submit(() -> {
@@ -264,6 +332,12 @@ public class VolontariManager extends DatabaseManager {
         });
     }
 
+    /**
+     * Recupera l'ID di un volontario dato il suo indirizzo email.
+     * 
+     * @param volontario l'email del volontario
+     * @return l'ID del volontario, o -1 se non trovato
+     */
     public int getIdByEmail(String volontario) {
         String sql = "SELECT id FROM volontari WHERE email = ?";
         try (Connection conn = DatabaseConnection.connect();
@@ -280,12 +354,22 @@ public class VolontariManager extends DatabaseManager {
         return -1;
     }
 
-     
+    /**
+     * Rimuove un singolo tipo di visita dai tipi supportati da un volontario.
+     * 
+     * @param email l'email del volontario
+     * @param tipoVisita il tipo di visita da rimuovere
+     */
     public void rimuoviTipoVisitaDaVolontario (String email, TipiVisitaClass tipoVisita){
         rimuoviTipiVisitaClassVolontario(email, Arrays.asList(tipoVisita));
     }
 
-     
+    /**
+     * Recupera tutti i volontari che supportano un determinato tipo di visita.
+     * 
+     * @param tipoVisita il tipo di visita richiesto
+     * @return lista dei volontari che supportano quel tipo di visita
+     */
     public List<Volontario> getVolontariPerTipoVisita (TipiVisitaClass tipoVisita){
         List<Volontario> volontariPerTipo = new ArrayList<>();
         synchronized (volontariMap) {
@@ -297,7 +381,11 @@ public class VolontariManager extends DatabaseManager {
         } return volontariPerTipo;
     }
 
-     
+    /**
+     * Organizza tutti i volontari per tipo di visita supportato.
+     * 
+     * @return mappa con tipo di visita come chiave e lista di volontari come valore
+     */
     public Map<TipiVisitaClass, List<Volontario>> getVolontariPerTipoVisita(){
         Map<TipiVisitaClass, List<Volontario>> volontariPerTipo = new HashMap<>();
         synchronized (volontariMap) {
@@ -309,23 +397,50 @@ public class VolontariManager extends DatabaseManager {
         } return volontariPerTipo;
     }
 
+    /**
+     * Restituisce la mappa di tutti i volontari.
+     * 
+     * @return la mappa concorrente dei volontari indicizzata per email
+     */
     public ConcurrentHashMap<String, Volontario> getVolontariMap() {
         return volontariMap;
     }
     
+    /**
+     * Imposta la mappa dei volontari.
+     * 
+     * @param volontariMap la nuova mappa dei volontari
+     */
     public void setVolontariMap(ConcurrentHashMap<String, Volontario> volontariMap) {
         this.volontariMap = volontariMap;
     }
 
+    /**
+     * Elimina un volontario sia dal database che dalla mappa in memoria.
+     * 
+     * @param volontarioDaEliminare il volontario da eliminare
+     */
     public void eliminaVolontario(Volontario volontarioDaEliminare) {
         eliminaVol(volontarioDaEliminare);
         volontariMap.remove(volontarioDaEliminare.getEmail());
     }
 
+    /**
+     * Modifica la password di un volontario.
+     * 
+     * @param email l'email del volontario
+     * @param nuovaPassword la nuova password
+     */
     public void modificaPsw(String email, String nuovaPassword) {
         aggiornaPswVolontario(email, nuovaPassword);
     }
 
+    /**
+     * Recupera l'email di un volontario dato il suo ID.
+     * 
+     * @param volontarioId l'ID del volontario
+     * @return l'email del volontario, o null se non trovato
+     */
     public String getEmailById(int volontarioId) {
         String sql = "SELECT email FROM volontari WHERE id = ?";
         try (Connection conn = DatabaseConnection.connect();
@@ -342,6 +457,12 @@ public class VolontariManager extends DatabaseManager {
         return null;
     }
 
+    /**
+     * Rimuove una visita da un volontario.
+     * 
+     * @param visitaSelezionata la visita da rimuovere
+     * @param volontarioSelezionato il volontario da cui rimuovere la visita
+     */
     public void rimuoviVisitaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
         rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato);
     }

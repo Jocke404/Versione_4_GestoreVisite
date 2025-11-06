@@ -9,15 +9,37 @@ import src.controller.ThreadPoolController;
 import java.sql.*;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Classe astratta base per tutti i manager del database.
+ * Fornisce funzionalità comuni per la gestione delle connessioni,
+ * operazioni asincrone tramite thread pool e utility per le query.
+ * 
+ */
 public abstract class DatabaseManager {
+    /** Oggetto per l'output su console */
     protected ConsoleIO consoleIO;
+    
+    /** Executor service per operazioni asincrone sul database */
     protected ExecutorService executorService;
 
+    /**
+     * Costruttore del manager del database.
+     * Inizializza il thread pool e l'oggetto per l'output.
+     * 
+     * @param threadPoolManager il controller del thread pool
+     */
     public DatabaseManager(ThreadPoolController threadPoolManager) {
         this.executorService = threadPoolManager.createThreadPool(4);
         this.consoleIO = new ConsoleIO();
     }
 
+    /**
+     * Verifica se esiste almeno un record nel database che soddisfa la query.
+     * 
+     * @param sql la query SQL da eseguire
+     * @param parametri i parametri della query (opzionali)
+     * @return true se esiste almeno un record, false altrimenti
+     */
     public boolean recordEsiste(String sql, Object... parametri) {
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -33,6 +55,15 @@ public abstract class DatabaseManager {
         return false;
     }
     
+    /**
+     * Aggiorna l'indirizzo email di un utente nel database.
+     * Sincronizza la modifica sia nella tabella specifica dell'utente
+     * che nella tabella utenti_unificati.
+     * 
+     * @param utente l'utente di cui aggiornare l'email
+     * @param nuovaEmail il nuovo indirizzo email
+     * @return true se l'aggiornamento è andato a buon fine, false altrimenti
+     */
     public synchronized boolean aggiornaEmail(Utente utente, String nuovaEmail) {
         String vecchiaEmail = utente.getEmail();
         String tipoUtente = null;
@@ -90,7 +121,14 @@ public abstract class DatabaseManager {
         return false;
     }
 
-     
+    /**
+     * Aggiunge un utente alla tabella unificata degli utenti.
+     * Questa tabella contiene tutti gli utenti del sistema per facilitare
+     * l'autenticazione centralizzata.
+     * 
+     * @param utente l'utente da aggiungere
+     * @param passwordModificata indica se la password è stata già modificata
+     */
     protected void aggiungiUtenteUnificato(Utente utente, boolean passwordModificata) {
         String nome = utente.getNome();
         String cognome = utente.getCognome();

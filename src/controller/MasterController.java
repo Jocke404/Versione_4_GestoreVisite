@@ -10,42 +10,114 @@ import src.model.*;
 import src.model.db.*;
 import src.view.*;
 
-
+/**
+ * Controller principale dell'applicazione che coordina tutti i componenti.
+ * Gestisce l'inizializzazione del sistema, l'autenticazione, la creazione dei menu
+ * e l'orchestrazione dei task automatici (validazione visite, sincronizzazione database).
+ * 
+ *  
+ *  
+ */
 public class MasterController {
 
+    /** Il volontario attualmente autenticato */
     public Volontario volontarioCorrente;
+    
+    /** Il configuratore attualmente autenticato */
     public Configuratore configuratoreCorrente;
+    
+    /** Il fruitore attualmente autenticato */
     public Fruitore fruitoreCorrente;
+    
+    /** L'utente generico attualmente autenticato */
     public Utente utenteCorrente;
+    
+    /** Controller per la gestione dei thread pool */
     private ThreadPoolController threadPoolController;
+    
+    /** Manager dei volontari */
     private VolontariManager volontariManager;
+    
+    /** Manager dei configuratori */
     private ConfiguratoriManager configuratoriManager;
+    
+    /** Manager dei fruitori */
     private FruitoreManager fruitoreManager;
+    
+    /** Manager dei luoghi */
     private LuoghiManager luoghiManager;
+    
+    /** Manager delle visite */
     private VisiteManagerDB visiteManager;
+    
+    /** Manager delle prenotazioni */
     private PrenotazioneManager prenotazioneManager;
+    
+    /** Manager generico del database */
     private DatabaseManager databaseManager;
+    
+    /** Gestore degli aggiornamenti del database */
     private DatabaseUpdater databaseUpdater;
+    
+    /** Utility per l'aggiunta di elementi */
     private AggiuntaUtilita aggiuntaUtilita;
+    
+    /** Utility per la modifica di elementi */
     private ModificaUtilita modificaUtilita;
+    
+    /** Controller dell'autenticazione */
     private AuthenticationController authenticationController;
+    
+    /** Controller dei volontari */
     private VolontariController volontariController;
+    
+    /** Controller dei configuratori */
     private ConfiguratoriController configuratoriController;
+    
+    /** Controller dei fruitori */
     private FruitoreController fruitoreController;
+    
+    /** Controller dei luoghi */
     private LuoghiController luoghiController;
+    
+    /** Controller delle visite */
     private VisiteController visiteController;
+    
+    /** Validatore delle visite */
     private ValidatoreVisite validatore;
+    
+    /** Gestione dell'ambito territoriale */
     private AmbitoTerritoriale ambitoTerritoriale = new AmbitoTerritoriale();
+    
+    /** Factory per la creazione dei menu */
     private MenuFactory menuFactory = new MenuFactory();
+    
+    /** Interfaccia per l'I/O console */
     private ConsoleIO consoleIO = new ConsoleIO();
+    
+    /** Executor per task schedulati periodici */
     private ScheduledExecutorService scheduledExecutor;
+    
+    /** Utility per la visualizzazione */
     private ViewUtilita viewUtilita;
+    
+    /** Gestione disponibilità volontari */
     private Disponibilita disponibilita = new Disponibilita();
 
+    /** Flag di autenticazione avvenuta */
     private Boolean isAuth = false;
 
+    /**
+     * Costruttore vuoto.
+     */
     public MasterController(){}
 
+    /**
+     * Crea e inizializza l'applicazione con tutti i componenti necessari.
+     * Istanzia manager, controller, utility e configura le dipendenze.
+     * 
+     * @return l'istanza configurata di MasterController
+     */
     public MasterController createApp() {
 
         threadPoolController = ThreadPoolController.getInstance();
@@ -54,7 +126,7 @@ public class MasterController {
         fruitoreManager = new FruitoreManager(threadPoolController);
         luoghiManager = new LuoghiManager(threadPoolController);
         visiteManager = new VisiteManagerDB(threadPoolController);
-        prenotazioneManager = new PrenotazioneManager(threadPoolController, visiteManager, fruitoreManager);
+        prenotazioneManager = new PrenotazioneManager(threadPoolController, visiteManager);
         databaseUpdater = new DatabaseUpdater(volontariManager, configuratoriManager, luoghiManager, visiteManager);
         aggiuntaUtilita = new AggiuntaUtilita(volontariManager, luoghiManager, visiteManager, prenotazioneManager);
         modificaUtilita = new ModificaUtilita(visiteManager);
@@ -81,6 +153,11 @@ public class MasterController {
         return masterController;
     }
 
+    /**
+     * Avvia l'applicazione dopo l'autenticazione.
+     * Esegue task automatici di validazione visite e sincronizzazione disponibilità,
+     * avvia task schedulati periodici e mostra il menu appropriato per l'utente.
+     */
     public void startApp() {
         if (autentica()) {
             threadPoolController.createThreadPool(1).submit(() -> {
@@ -114,6 +191,10 @@ public class MasterController {
         }
     }
 
+    /**
+     * Aggiorna i dati dal database in modo asincrono.
+     * Esegue la sincronizzazione in un thread separato.
+     */
     private void aggiornaDatabaseAsync() {
         ExecutorService executor = threadPoolController.createThreadPool(4);
         executor.submit(()->{
@@ -121,10 +202,19 @@ public class MasterController {
         });
     }
 
+    /**
+     * Arresta tutti gli ExecutorService gestiti dal ThreadPoolController.
+     */
     public void stopExecutorService() {
         threadPoolController.shutdownAll();
     }
 
+    /**
+     * Gestisce il processo di autenticazione con un massimo di 3 tentativi.
+     * In caso di successo, inizializza i controller specifici per il tipo di utente.
+     * 
+     * @return true se l'autenticazione ha successo, false altrimenti
+     */
     private boolean autentica() {
         final int maxAttempts = 3;
         int attempt = 0;
@@ -150,6 +240,10 @@ public class MasterController {
         return isAuth;
     }
 
+    /**
+     * Mostra il menu appropriato in base al tipo di utente autenticato.
+     * Crea menu specifici per Configuratore, Volontario o Fruitore.
+     */
     private void showMenu() {
         Menu menu = null;
         if (isAuth) {

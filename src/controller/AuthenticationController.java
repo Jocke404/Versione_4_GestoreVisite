@@ -3,12 +3,30 @@ package src.controller;
 import src.view.*;
 import src.model.*;
 
-
+/**
+ * Controller per la gestione dell'autenticazione degli utenti.
+ * Coordina il processo di login, la gestione delle credenziali temporanee
+ * e la creazione di nuovi account fruitori.
+ * 
+ *  
+ *  
+ */
 public class AuthenticationController {
+    /** Manager delle credenziali per autenticazione e gestione utenti */
     private final CredentialManager credentialManager;
+    
+    /** Interfaccia per l'interazione con l'utente */
     private final ConsoleIO consoleIO;    
+    
+    /** Utente attualmente autenticato nel sistema */
     private Utente utenteLoggato;
 
+    /**
+     * Costruttore del controller di autenticazione.
+     * 
+     * @param credentialManager il manager delle credenziali
+     * @param consoleIO l'interfaccia per l'input/output su console
+     */
     public AuthenticationController(
         CredentialManager credentialManager,
         ConsoleIO consoleIO
@@ -17,6 +35,14 @@ public class AuthenticationController {
         this.consoleIO = consoleIO;
     }
 
+    /**
+     * Gestisce il processo di autenticazione dell'utente.
+     * Se l'email è registrata, verifica le credenziali e gestisce eventuali
+     * credenziali temporanee richiedendo la modifica di email e password.
+     * Se l'email non è registrata, crea un nuovo account fruitore.
+     * 
+     * @return true se l'autenticazione ha successo, false altrimenti
+     */
     public boolean autentica() {
         String email = consoleIO.chiediEmail();
         boolean emailPresente = credentialManager.isEmailPresente(email);
@@ -59,21 +85,24 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Richiede e aggiorna la password di un utente.
+     * 
+     * @param utente l'utente di cui modificare la password
+     */
     public void modificaPasswordUtente(Utente utente) {
         String nuovaPassword = consoleIO.chiediPassword();
         credentialManager.aggiornaPasswordUtente(utente, nuovaPassword);
         consoleIO.mostraMessaggio("Password aggiornata con successo.");
     }
 
-     
-     
-     
-     
-     
-     
-     
-     
-
+    /**
+     * Crea un nuovo utente fruitore raccogliendo i dati necessari.
+     * Richiede nome, cognome, email e password, quindi crea le credenziali
+     * nel sistema.
+     * 
+     * @return il nuovo utente fruitore creato
+     */
     public Utente creaNuovoUtente() {
         String name = consoleIO.chiediNome();
         String surname = consoleIO.chiediCognome();
@@ -84,7 +113,11 @@ public class AuthenticationController {
         return nuovoUtente;
     }
 
-
+    /**
+     * Restituisce l'utente attualmente autenticato.
+     * 
+     * @return l'utente loggato nel sistema
+     */
     public Utente getUtenteCorrente() {
         return utenteLoggato;
     }

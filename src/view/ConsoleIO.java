@@ -26,29 +26,71 @@ import src.model.db.LuoghiManager;
 import src.model.db.VolontariManager;
 import src.model.db.DisponibilitaManager;
 
+/**
+ * Implementazione console-based dell'interfaccia View per il sistema di gestione visite.
+ * Fornisce un'interfaccia testuale completa per l'interazione con tutti gli aspetti del sistema:
+ * - Gestione dell'autenticazione utente
+ * - Pianificazione guidata e libera delle visite
+ * - Gestione delle disponibilità dei volontari
+ * - Configurazione di luoghi, date precluse e parametri del sistema
+ * - Gestione delle prenotazioni
+ * 
+ * La classe utilizza la libreria InputDati per l'input validato e coordina
+ * le operazioni tra i diversi manager del sistema per fornire un'esperienza
+ * utente completa via console.
+ * 
+ *  
+ *  
+ */
 public class ConsoleIO implements View{
 
+    /** Mappa delle disponibilità dei volontari indicizzata per email */
     private ConcurrentHashMap<String, List<LocalDate>> disponibilitaVolontari = new ConcurrentHashMap<>();
+    
+    /** Lista delle durate standard per le visite (in minuti) */
     private final List<Integer> durataList = List.of(30, 60, 90, 120);
+    
+    /** Manager per la gestione delle disponibilità */
     private final DisponibilitaManager disponibilitaManager = new DisponibilitaManager();
 
+    /**
+     * Carica la mappa delle disponibilità dei volontari dal database.
+     * Aggiorna la mappa locale con i dati più recenti delle disponibilità.
+     * 
+     * @param volontariManager Manager per l'accesso ai dati dei volontari
+     */
     public void caricaDisponibilitaMap(VolontariManager volontariManager) {
         disponibilitaVolontari.clear();
         disponibilitaVolontari = disponibilitaManager.getDisponibilitaMap(volontariManager);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mostraMessaggio(String messaggio) {
         System.out.println(messaggio);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mostraErrore(String errore) {
         System.err.println(errore);
     }
 
+    /**
+     * Chiede all'utente se vuole annullare l'operazione corrente.
+     * 
+     * @return true se l'utente vuole annullare, false altrimenti
+     */
     public boolean chiediAnnullaOperazione() {
         return InputDati.yesOrNo("Vuoi annullare l'operazione e tornare indietro? ");
     }
 
+    /**
+     * {@inheritDoc}
+     * Visualizza ogni elemento in un formato separato da linee divisorie.
+     */
     public void mostraElenco(List<String> elementi) {
         for (int i = 0; i < elementi.size(); i++) {
             System.out.println("----------");
@@ -57,6 +99,9 @@ public class ConsoleIO implements View{
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mostraElencoConOggetti(List<?> oggetti) {
         for (int i = 0; i < oggetti.size(); i++) {
             System.out.println("========================================");
@@ -65,10 +110,22 @@ public class ConsoleIO implements View{
         }
     }
 
+    /**
+     * Mostra le visite disponibili utilizzando la visualizzazione standard degli oggetti.
+     * 
+     * @param visite Lista delle visite da visualizzare
+     */
     public void mostraVisiteDisponibili(List<Visita> visite) {
         mostraElencoConOggetti(visite);
     }
 
+    /**
+     * Chiede e valida l'email dell'utente.
+     * Effettua una validazione del formato email e richiede nuovamente l'input
+     * se il formato non è valido.
+     * 
+     * @return Email validata inserita dall'utente
+     */
     public String chiediEmail() {
         String email = InputDati.leggiStringaNonVuota("email: ");
         if (!isEmailValida(email)) {
@@ -78,18 +135,38 @@ public class ConsoleIO implements View{
         return email;
     }
 
+    /**
+     * Chiede la password all'utente.
+     * 
+     * @return Password inserita dall'utente
+     */
     public String chiediPassword() {
         return InputDati.leggiStringaNonVuota("password: ");
     }
 
+    /**
+     * Chiede una nuova password all'utente per operazioni di modifica.
+     * 
+     * @return Nuova password inserita dall'utente
+     */
     public String chiediNuovaPassword() {
         return InputDati.leggiStringaNonVuota("Inserisci la nuova password: ");
     }
 
+    /**
+     * Chiede il nome all'utente.
+     * 
+     * @return Nome inserito dall'utente
+     */
     public String chiediNome() {
         return InputDati.leggiStringaNonVuota("Inserisci il nome: ");
     }
 
+    /**
+     * Chiede il cognome all'utente.
+     * 
+     * @return Cognome inserito dall'utente
+     */
     public String chiediCognome() {
         return InputDati.leggiStringaNonVuota("Inserisci il cognome: ");
     }

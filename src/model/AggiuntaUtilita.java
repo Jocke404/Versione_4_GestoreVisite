@@ -2,7 +2,6 @@ package src.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java.time.*;
@@ -11,7 +10,6 @@ import src.model.db.*;
 
 import lib.InputDati;
 import src.view.ConsoleIO;
-import src.view.ViewUtilita;
 
 
 
@@ -27,15 +25,13 @@ public class AggiuntaUtilita {
     List<TipiVisitaClass> tipiVisitaList;
     ConcurrentHashMap<Integer, Visita> visiteMap;
     ConcurrentHashMap<LocalDate, String> datePrecluseMap;
-    private final ValidatoreVisite validatoreVisite;
-    private final ViewUtilita viewUtilita = ViewUtilita.getInstance();
-    private final ModificaUtilita modificaUtilita;
+
+
     private int maxPersoneIscrivibili;
-    private AmbitoTerritoriale ambitoTerritoriale = new AmbitoTerritoriale();
+
     
 
     private final ConsoleIO consoleIO = new ConsoleIO();
-    private final Map<String, List<LocalDate>> disponibilitaVolontari = new ConcurrentHashMap<>();
     private final PrenotazioneManager prenotazioneManager;
 
     public AggiuntaUtilita(VolontariManager volontariManager, LuoghiManager luoghiManager, 
@@ -47,9 +43,7 @@ public class AggiuntaUtilita {
         this.volontariMap = volontariManager.getVolontariMap();
         this.visiteMap = visiteManagerDB.getVisiteMap();
         this.tipiVisitaList = visiteManagerDB.getTipiVisitaClassList();
-        this.validatoreVisite = new ValidatoreVisite(visiteManagerDB);
         this.prenotazioneManager = prenotazioneManager;
-        this.modificaUtilita = new ModificaUtilita(visiteManagerDB);
     }
 
     public boolean aggiungiVisita(Visita nuovaVisita) {

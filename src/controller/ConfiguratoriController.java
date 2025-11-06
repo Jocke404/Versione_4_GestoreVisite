@@ -20,22 +20,61 @@ import src.model.AmbitoTerritoriale;
 import src.model.Luogo;
 import src.view.ConsoleIO;
 
+/**
+ * Controller per le operazioni dei configuratori (amministratori).
+ * Gestisce tutte le funzionalità amministrative del sistema: gestione volontari,
+ * luoghi, visite, date precluse, tipi di visita e configurazioni globali.
+ * 
+ *  
+ *  
+ */
 public class ConfiguratoriController {
+    /** Utility per l'aggiunta di nuovi elementi */
     private final AggiuntaUtilita addUtilita;
+    
+    /** Utility per la modifica di elementi esistenti */
     private final ModificaUtilita modificaUtilita;
+    
+    /** Utility per la visualizzazione dei dati */
     private final ViewUtilita viewUtilita;
+    
+    /** Gestione dell'ambito territoriale delle visite */
     private final AmbitoTerritoriale ambitoTerritoriale = new AmbitoTerritoriale();
 
+    /** Controller dedicato ai volontari */
     private final VolontariController volontariController;
+    
+    /** Controller dedicato ai luoghi */
     private final LuoghiController luoghiController;
+    
+    /** Controller dedicato alle visite */
     private final VisiteController visiteController;
+    
+    /** Interfaccia per l'interazione con l'utente */
     private ConsoleIO consoleIO = new ConsoleIO();
 
+    /** Manager per le operazioni sui volontari */
     private VolontariManager volontariManager;
+    
+    /** Manager per le operazioni sui luoghi */
     private LuoghiManager luoghiManager;
+    
+    /** Manager per le operazioni sulle visite */
     private VisiteManagerDB visiteManagerDB;
 
-
+    /**
+     * Costruttore del controller dei configuratori.
+     * 
+     * @param addUtilita l'utility per aggiungere elementi
+     * @param modificaUtilita l'utility per modificare elementi
+     * @param viewUtilita l'utility per visualizzare dati
+     * @param volontariController il controller dei volontari
+     * @param luoghiController il controller dei luoghi
+     * @param visiteController il controller delle visite
+     * @param visiteManagerDB il manager delle visite
+     * @param volontariManager il manager dei volontari
+     * @param luoghiManager il manager dei luoghi
+     */
     public ConfiguratoriController(
         AggiuntaUtilita addUtilita, 
         ModificaUtilita modificaUtilita, 
@@ -58,6 +97,10 @@ public class ConfiguratoriController {
         this.luoghiManager = luoghiManager;
     }
 
+    /**
+     * Aggiunge un nuovo volontario al sistema.
+     * Mostra l'elenco dei volontari esistenti, raccoglie i dati e richiede conferma.
+     */
     public void aggiungiVolontario() {
         consoleIO.mostraElencoConOggetti(volontariManager.getVolontariMap().values().stream().toList());
          
@@ -69,10 +112,18 @@ public class ConfiguratoriController {
         }
     }
 
+    /**
+     * Visualizza l'elenco di tutti i volontari.
+     */
     public void mostraVolontari() {
         viewUtilita.stampaVolontari(volontariController);
     }
 
+    /**
+     * Aggiunge un nuovo luogo al sistema.
+     * Mostra i luoghi esistenti, raccoglie i dati verificando l'ambito territoriale
+     * e richiede conferma prima dell'aggiunta.
+     */
     public void aggiungiLuogo() {
         consoleIO.mostraElencoConOggetti(luoghiManager.getLuoghiMap().values().stream().toList());
          
@@ -84,18 +135,31 @@ public class ConfiguratoriController {
         }
     }
 
+    /**
+     * Visualizza l'elenco di tutti i luoghi.
+     */
     public void mostraLuoghi() {
         viewUtilita.stampaLuoghi(luoghiController);
     }
 
+    /**
+     * Visualizza l'elenco di tutte le visite.
+     */
     public void mostraVisite() {
         viewUtilita.stampaVisite(visiteController);
     }
     
+    /**
+     * Visualizza le visite raggruppate per stato (Proposta, Confermata, ecc.).
+     */
     public void visualizzaVisitePerStato(){
         viewUtilita.stampaVisitePerStato();
     }
 
+    /**
+     * Modifica il numero massimo di persone per visita.
+     * Mostra il valore attuale e permette di modificarlo previa conferma.
+     */
     public void modificaMaxPersone() {
         consoleIO.mostraMaxPersonePerVisita(visiteManagerDB);
         if (consoleIO.chiediAnnullaOperazione()) return;

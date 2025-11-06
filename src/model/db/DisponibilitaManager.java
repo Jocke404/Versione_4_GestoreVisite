@@ -6,18 +6,30 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Date;
 
-import src.controller.ThreadPoolController;
 import src.model.Volontario;
 
+/**
+ * Gestisce le disponibilità dei volontari nel database.
+ * Fornisce metodi per salvare, recuperare e gestire le date in cui
+ * i volontari sono disponibili per condurre visite guidate.
+ *  
+ */
 public class DisponibilitaManager{
 
-     
+    /**
+     * Salva le disponibilità di tutti i volontari nel database.
+     * Utilizza una transazione per garantire la consistenza dei dati:
+     * prima elimina tutte le disponibilità esistenti, poi inserisce quelle nuove.
+     * 
+     * @param merged mappa dei volontari con le rispettive liste di date disponibili
+     * @param volontariManager il manager dei volontari per recuperare gli ID
+     * @throws RuntimeException se si verifica un errore durante il salvataggio
+     */
     public void salvaDisponibilitaVolontari(Map<Volontario, List<LocalDate>> merged, VolontariManager volontariManager) {
         if (merged == null || merged.isEmpty()) {
             return;
@@ -69,6 +81,12 @@ public class DisponibilitaManager{
         }
     }
 
+    /**
+     * Recupera tutte le date di disponibilità di un volontario specifico.
+     * 
+     * @param volontarioId l'ID del volontario
+     * @return lista delle date in cui il volontario è disponibile, ordinata cronologicamente
+     */
     public List<LocalDate> getDisponibilitaByVolontarioId(int volontarioId) {
         List<LocalDate> disponibilita = new ArrayList<>();
         String sql = "SELECT data_disponibile FROM disponibilita WHERE volontario_id = ? ORDER BY data_disponibile";
@@ -91,6 +109,12 @@ public class DisponibilitaManager{
         return disponibilita;
     }
 
+    /**
+     * Recupera tutte le disponibilità di tutti i volontari organizzate per email.
+     * 
+     * @param volontariManager il manager dei volontari per recuperare le email dagli ID
+     * @return mappa con email del volontario come chiave e lista di date disponibili come valore
+     */
     public ConcurrentHashMap<String, List<LocalDate>> getDisponibilitaMap(VolontariManager volontariManager) {
         ConcurrentHashMap<String, List<LocalDate>> disponibilitaMap = new ConcurrentHashMap<>();
         String sql = "SELECT volontario_id, data_disponibile FROM disponibilita";

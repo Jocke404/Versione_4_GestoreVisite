@@ -8,8 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Minimo DAO per leggere/scrivere territorial_scope nella tabella application_settings.
- * Il campo viene salvato come JSON array semplice: ["a","b","c"]
+ * Data Access Object per la gestione delle impostazioni dell'applicazione.
+ * Gestisce il campo territorial_scope (ambito territoriale) salvato come JSON array
+ * e altre impostazioni globali come il numero massimo di persone per visita.
+ * 
+ *  
+ *  
  */
 public class ApplicationSettingsDAO {
 
@@ -23,6 +27,11 @@ public class ApplicationSettingsDAO {
     private static final String UPDATE_MAX_SQL = "UPDATE application_settings SET max_people_per_visit = ?, updated_at = CURRENT_TIMESTAMP";
     private static final String INSERT_MAX_SQL = "INSERT INTO application_settings(max_people_per_visit, created_at, updated_at) VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
+    /**
+     * Recupera il numero massimo di persone per visita dalle impostazioni.
+     * 
+     * @return il numero massimo di persone, o null se non impostato
+     */
     public static Integer getMaxPeoplePerVisit() {
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement ps = conn.prepareStatement(SELECT_MAX_SQL);
@@ -38,6 +47,13 @@ public class ApplicationSettingsDAO {
         return null;
     }
 
+    /**
+     * Imposta il numero massimo di persone per visita nelle impostazioni.
+     * Aggiorna se esiste già un record, altrimenti ne inserisce uno nuovo.
+     * 
+     * @param max il numero massimo di persone
+     * @return true se l'operazione ha successo, false altrimenti
+     */
     public static boolean setMaxPeoplePerVisit(int max) {
         try (Connection conn = DatabaseConnection.connect()) {
             try (PreparedStatement upd = conn.prepareStatement(UPDATE_MAX_SQL)) {
@@ -56,6 +72,11 @@ public class ApplicationSettingsDAO {
         return false;
     }
 
+    /**
+     * Verifica se è stato impostato un ambito territoriale.
+     * 
+     * @return true se l'ambito territoriale è impostato, false altrimenti
+     */
     public static boolean hasTerritorialScope() {
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement ps = conn.prepareStatement(SELECT_SQL);
@@ -70,6 +91,12 @@ public class ApplicationSettingsDAO {
         return false;
     }
 
+    /**
+     * Recupera l'ambito territoriale dalle impostazioni.
+     * L'ambito è salvato come JSON array e viene parsato in una lista di stringhe.
+     * 
+     * @return lista degli ambiti territoriali configurati
+     */
     public static List<String> getTerritorialScope() {
         List<String> result = new ArrayList<>();
         try (Connection conn = DatabaseConnection.connect();
@@ -111,6 +138,14 @@ public class ApplicationSettingsDAO {
         return result;
     }
 
+    /**
+     * Imposta l'ambito territoriale nelle impostazioni.
+     * Salva la lista come JSON array nel database.
+     * Aggiorna se esiste già un record, altrimenti ne inserisce uno nuovo.
+     * 
+     * @param ambiti lista degli ambiti territoriali da salvare
+     * @return true se l'operazione ha successo, false altrimenti
+     */
     public static boolean setTerritorialScope(List<String> ambiti) {
         String json = toJsonArray(ambiti);
         try (Connection conn = DatabaseConnection.connect()) {
@@ -132,6 +167,12 @@ public class ApplicationSettingsDAO {
         return false;
     }
 
+    /**
+     * Converte una lista di stringhe in un array JSON.
+     * 
+     * @param items la lista di stringhe da convertire
+     * @return la rappresentazione JSON array delle stringhe
+     */
     private static String toJsonArray(List<String> items) {
         if (items == null || items.isEmpty()) return "[]";
         StringBuilder sb = new StringBuilder();
@@ -146,6 +187,11 @@ public class ApplicationSettingsDAO {
         return sb.toString();
     }
 
+    /**
+     * Imposta lo stato della raccolta dati nelle impostazioni.
+     * 
+     * @param stato true se la raccolta è attiva, false altrimenti
+     */
     public void setStatoRaccolta(Boolean stato) {
         try (Connection conn = DatabaseConnection.connect()) {
             try (PreparedStatement ps = conn.prepareStatement(UPDATE_STATO_RACCOLTA_SQL)) {

@@ -16,7 +16,6 @@ import src.model.Fruitore;
 import src.model.Luogo;
 import src.model.Prenotazione;
 import src.model.TipiVisitaClass;
-import src.model.TipiVisitaClass;
 import src.model.Visita;
 import src.model.Volontario;
 import src.model.db.ApplicationSettingsDAO;
@@ -27,17 +26,48 @@ import src.controller.VisiteController;
 import src.controller.LuoghiController;
 import src.controller.ThreadPoolController;
 
+/**
+ * Classe di utilità per la visualizzazione e stampa di dati nel sistema di gestione visite.
+ * Implementa il pattern Singleton e fornisce metodi statici per la visualizzazione
+ * strutturata di informazioni su:
+ * - Luoghi e relativi tipi di visita
+ * - Volontari e loro classificazioni
+ * - Visite in vari stati e filtri
+ * - Archivio storico delle visite
+ * - Date precluse e configurazioni
+ * - Prenotazioni degli utenti
+ * 
+ * La classe coordina l'output con ConsoleIO e gestisce la formattazione
+ * dei dati per una presentazione chiara all'utente.
+ *  
+ */
 public class ViewUtilita {
 
+    /** File di configurazione per il numero massimo di persone iscrivibili */
     private static final File NUMERO_PERSONE_FILE = new File("src/utility/max_persone_iscrivibili.config");
+    
+    /** Mappa delle visite attive nel sistema */
     private ConcurrentHashMap<Integer, Visita> visiteMap = new VisiteManagerDB(ThreadPoolController.getInstance()).getVisiteMap();
+    
+    /** Interfaccia console per l'output */
     private final ConsoleIO consoleIO = new ConsoleIO();
+    
+    /** Lista dei tipi di visita disponibili nel sistema */
     private List<TipiVisitaClass> tipiVisitaList = VisiteManagerDB.getTipiVisitaClassList();
     
+    /** Istanza singleton della classe */
     private static ViewUtilita instance;
 
+    /**
+     * Costruttore privato per implementare il pattern Singleton.
+     */
     private ViewUtilita() {}
 
+    /**
+     * Ottiene l'istanza singleton di ViewUtilita.
+     * 
+     * @return L'istanza unica di ViewUtilita
+     */
     public static ViewUtilita getInstance() {
         if (instance == null) {
             instance = new ViewUtilita();
@@ -45,7 +75,12 @@ public class ViewUtilita {
         return instance;
     }
 
-     
+    /**
+     * Visualizza l'elenco di tutti i luoghi disponibili nel sistema.
+     * Mostra un messaggio appropriato se non ci sono luoghi configurati.
+     * 
+     * @param luoghiController Controller per l'accesso ai dati dei luoghi
+     */
     public void stampaLuoghi(LuoghiController luoghiController) {
         List<Luogo> luoghi = luoghiController.getLuoghi();
         if (luoghi.isEmpty()) {
@@ -57,13 +92,22 @@ public class ViewUtilita {
         consoleIO.mostraElencoConOggetti(luoghi);
     }
 
-     
+    /**
+     * Visualizza l'elenco di tutti i volontari registrati nel sistema.
+     * 
+     * @param volontariController Controller per l'accesso ai dati dei volontari
+     */
     public void stampaVolontari(VolontariController volontariController) {
         List<Volontario> volontari = volontariController.getVolontari();
         consoleIO.mostraElencoConOggetti(volontari);
     }
 
-     
+    /**
+     * Visualizza l'elenco di tutte le visite nel sistema.
+     * Mostra un messaggio appropriato se non ci sono visite disponibili.
+     * 
+     * @param visiteController Controller per l'accesso ai dati delle visite
+     */
     public void stampaVisite(VisiteController visiteController) {
         List<Visita> visite = visiteController.getVisite();
         if (visite.isEmpty()) {

@@ -15,12 +15,33 @@ import src.model.db.ApplicationSettingsDAO;
 import src.view.ConsoleIO;
 import lib.InputDati;
 
+/**
+ * Gestisce l'ambito territoriale del sistema di gestione visite.
+ * Questa classe si occupa della configurazione, salvataggio e caricamento
+ * dell'ambito territoriale che definisce i comuni in cui il sistema opera.
+ * 
+ * L'ambito territoriale può essere salvato sia nel database tramite ApplicationSettingsDAO
+ * che in un file di configurazione come fallback.
+ * 
+ *  
+ *  
+ */
 public class AmbitoTerritoriale {
 
+    /** Percorso del file di configurazione per l'ambito territoriale */
     private static final String AMBITO_FILE = "src/utility/ambito_territoriale.config";
+    
+    /** Set dei comuni che compongono l'ambito territoriale */
     private Set<String> ambitoTerritoriale = new HashSet<>();
+    
+    /** Interfaccia per l'input/output con la console */
     private final ConsoleIO consoleIO = new ConsoleIO();
 
+    /**
+     * Verifica se l'ambito territoriale è già configurato e, in caso negativo,
+     * avvia la procedura di configurazione e salvataggio.
+     * Se è già configurato, carica i dati esistenti.
+     */
     public void verificaAggiornaAmbitoTerritoriale() {
         if (!isAmbitoConfigurato()) {
             scegliAmbitoTerritoriale();
@@ -30,6 +51,13 @@ public class AmbitoTerritoriale {
         }
     }
 
+    /**
+     * Verifica se l'ambito territoriale è già stato configurato.
+     * Controlla prima nel database tramite ApplicationSettingsDAO,
+     * poi verifica l'esistenza del file di configurazione.
+     * 
+     * @return true se l'ambito territoriale è configurato, false altrimenti
+     */
     public boolean isAmbitoConfigurato() {
         try {
             if (ApplicationSettingsDAO.hasTerritorialScope()) return true;
@@ -39,6 +67,11 @@ public class AmbitoTerritoriale {
         return file.exists();
     }
 
+    /**
+     * Avvia la procedura interattiva per la configurazione dell'ambito territoriale.
+     * Permette all'utente di inserire uno o più comuni che definiranno l'ambito
+     * territoriale del sistema. I dati vengono salvati automaticamente.
+     */
     public void scegliAmbitoTerritoriale() {
         consoleIO.mostraMessaggio("Configurazione ambito territoriale (inserisci uno o più comuni).");
         ambitoTerritoriale.clear();
@@ -50,6 +83,11 @@ public class AmbitoTerritoriale {
         consoleIO.mostraMessaggio("Ambito territoriale configurato: " + ambitoTerritoriale);
     }
 
+    /**
+     * Salva l'ambito territoriale configurato.
+     * Tenta prima di salvare nel database tramite ApplicationSettingsDAO,
+     * in caso di fallimento utilizza il file di configurazione come fallback.
+     */
     private void salvaAmbitoTerritoriale() {
         List<String> lista = new ArrayList<>(ambitoTerritoriale);
         boolean ok = false;
@@ -73,6 +111,12 @@ public class AmbitoTerritoriale {
         if (ok) consoleIO.mostraMessaggio("Ambito salvato.");
     }
 
+    /**
+     * Carica l'ambito territoriale dai dati salvati.
+     * Tenta prima di caricare dal database tramite ApplicationSettingsDAO,
+     * in caso di fallimento legge dal file di configurazione.
+     * Se i dati vengono caricati dal file, tenta di sincronizzarli con il database.
+     */
     public void caricaAmbitoTerritoriale() {
         ambitoTerritoriale.clear();
         List<String> fromDb = null;
@@ -107,6 +151,12 @@ public class AmbitoTerritoriale {
         }
     }
 
+    /**
+     * Restituisce la lista dei comuni che compongono l'ambito territoriale.
+     * Se l'ambito non è ancora stato caricato in memoria, lo carica automaticamente.
+     * 
+     * @return Lista dei comuni dell'ambito territoriale
+     */
     public List<String> getAmbitoTerritoriale() {
         if (ambitoTerritoriale.isEmpty()) {
             caricaAmbitoTerritoriale();

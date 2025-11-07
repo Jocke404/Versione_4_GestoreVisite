@@ -22,9 +22,8 @@ public class MenuVolontario implements Menu {
     
     /** Opzioni disponibili nel menu dei volontari */
     private static final String[] OPZIONI_VOLONTARIO = {
-        "Visualizza visite assegnate",
-        "Inserisci disponibilità",
-        "Modifica disponibilità",
+        "Visualizza visite assegnate", "Visualizza Tipi Visita Assegnati",
+        "Inserisci disponibilità", "Modifica disponibilità", 
         "Modifica password",
     };
 
@@ -52,9 +51,10 @@ public class MenuVolontario implements Menu {
 
             switch (chosed) {
                 case 1 -> volontariController.visualizzaVisiteVolontario();
-                case 2 -> volontariController.raccogliDisponibilitaVolontario();
-                case 3 -> volontariController.modificaDisponibilitaVolontario();
-                case 4 -> volontariController.modificaPassword();
+                case 2 -> volontariController.visualizzaTipiVisitaVolontario();
+                case 3 -> volontariController.raccogliDisponibilitaVolontario();
+                case 4 -> volontariController.modificaDisponibilitaVolontario();
+                case 5 -> volontariController.modificaPassword();
                 case 0 -> goOn = false;
                 default -> System.out.println("Opzione non valida.");
             }

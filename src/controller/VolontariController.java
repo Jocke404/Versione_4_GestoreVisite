@@ -205,4 +205,11 @@ public class VolontariController {
     public void rimuoviVisitaDaVolontario(Visita visitaSelezionata, Volontario volontarioSelezionato) {
         volontariManager.rimuoviVisitaVolontario(visitaSelezionata, volontarioSelezionato);
     }
+
+    /**
+     * Visualizza i tipi di visita assegnati al volontario corrente.
+     */
+    public void visualizzaTipiVisitaVolontario() {
+        viewUtilita.stampaTipiVisitaVolontario(volontarioCorrente, volontariManager);
+    }
 }

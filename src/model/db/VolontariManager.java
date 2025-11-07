@@ -275,6 +275,34 @@ public class VolontariManager extends DatabaseManager {
     }
 
     /**
+     * Recupera i tipi di visita assegnati a un volontario dal database.
+     * 
+     * @param volontarioCorrente il volontario di cui recuperare i tipi di visita
+     * @return la lista dei tipi di visita assegnati
+     */
+    protected List<TipiVisitaClass> getTipiVisitaAssegnatiVolontarioDB(Volontario volontarioCorrente) {
+        String sql = "SELECT tipi_di_visite FROM volontari WHERE email = ?";
+        List<TipiVisitaClass> tipiVisitaAssegnati = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, volontarioCorrente.getEmail());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String tipiDiVisite = rs.getString("tipi_di_visite");
+                    if (tipiDiVisite != null && !tipiDiVisite.isEmpty()) {
+                        for (String tipo : tipiDiVisite.split(",")) {
+                            tipiVisitaAssegnati.add(TipiVisitaClass.valueOf(tipo.trim()));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore durante il recupero dei tipi di visita assegnati al volontario: " + e.getMessage());
+        }
+        return tipiVisitaAssegnati;
+    }
+
+    /**
      * Aggiunge un tipo di visita ai tipi supportati da un volontario.
      * 
      * @param email l'email del volontario
@@ -467,5 +495,14 @@ public class VolontariManager extends DatabaseManager {
         rimuoviVisitaDaVolontario(visitaSelezionata, volontarioSelezionato);
     }
 
+    /**
+     * Recupera i tipi di visita assegnati a un volontario.
+     * 
+     * @param volontarioCorrente il volontario di cui recuperare i tipi di visita
+     * @return la lista dei tipi di visita assegnati
+     */
+    public List<TipiVisitaClass> getTipiVisitaAssegnatiVolontario(Volontario volontarioCorrente) {
+        return getTipiVisitaAssegnatiVolontarioDB(volontarioCorrente);
+    }
 
 }

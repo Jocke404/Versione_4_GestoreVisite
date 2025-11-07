@@ -1,6 +1,6 @@
 package src.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * Rappresenta una prenotazione effettuata da un fruitore per una visita guidata.
@@ -21,7 +21,7 @@ public class Prenotazione {
     private int numeroPersone;
     
     /** Data e ora in cui è stata effettuata la prenotazione */
-    private LocalDateTime dataPrenotazione;
+    private LocalDate dataPrenotazione;
     
     /** Codice univoco identificativo della prenotazione */
     private String codicePrenotazione;
@@ -41,7 +41,7 @@ public class Prenotazione {
         this.idVisita = idVisita;
         this.emailFruitore = emailFruitore;
         this.numeroPersone = numeroPersone;
-        this.dataPrenotazione = LocalDateTime.now();
+        this.dataPrenotazione = LocalDate.now();
         this.codicePrenotazione = generaCodicePrenotazione();
         this.stato = "CONFERMATA";
     }
@@ -107,13 +107,13 @@ public class Prenotazione {
      * Restituisce la data e ora della prenotazione.
      * @return la data e ora della prenotazione
      */
-    public LocalDateTime getDataPrenotazione() { return dataPrenotazione; }
+    public LocalDate getDataPrenotazione() { return dataPrenotazione; }
     
     /**
      * Imposta la data e ora della prenotazione.
      * @param dataPrenotazione la nuova data e ora
      */
-    public void setDataPrenotazione(LocalDateTime dataPrenotazione) { this.dataPrenotazione = dataPrenotazione; }
+    public void setDataPrenotazione(LocalDate dataPrenotazione) { this.dataPrenotazione = dataPrenotazione; }
     
     /**
      * Restituisce il codice univoco della prenotazione.

@@ -23,6 +23,7 @@ import src.model.Volontario;
 import src.model.db.VisiteManagerDB;
 import src.model.ValidatoreVisite;
 import src.model.db.LuoghiManager;
+import src.model.db.PrenotazioneManager;
 import src.model.db.VolontariManager;
 import src.model.db.DisponibilitaManager;
 
@@ -268,14 +269,15 @@ public class ConsoleIO implements View{
         return nuovaVisita;
     }
 
-    public Visita pianificazioneLibera(VisiteManagerDB visiteManagerDB, VolontariManager volontariManager, LuoghiManager luoghiManager) {
+    public Visita pianificazioneLibera(VisiteManagerDB visiteManagerDB, VolontariManager volontariManager, 
+                                        LuoghiManager luoghiManager, PrenotazioneManager prenotazioneManager) {
         String titolo = InputDati.leggiStringaNonVuota("Titolo della visita: ");
         String luogoNomeScelto = scegliLuogo(luoghiManager);
         if (luogoNomeScelto == null) return null;
         ConcurrentHashMap<String, Luogo> luoghiMap = luoghiManager.getLuoghiMap();
         ConcurrentHashMap<String, Volontario> volontariMap = volontariManager.getVolontariMap();
         ConcurrentHashMap<Integer, Visita> visiteMap = visiteManagerDB.getVisiteMap();
-        ValidatoreVisite validatoreVisite = new ValidatoreVisite(visiteManagerDB);
+        ValidatoreVisite validatoreVisite = new ValidatoreVisite(visiteManagerDB, prenotazioneManager);
         Luogo luogoSceltoObj = luoghiMap.get(luogoNomeScelto);
         List<TipiVisitaClass> tipiVisita = luogoSceltoObj.getTipiVisitaClass();
         if (tipiVisita == null || tipiVisita.isEmpty()) {

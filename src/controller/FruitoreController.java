@@ -1,13 +1,16 @@
 package src.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import src.model.AggiuntaUtilita;
 import src.model.Fruitore;
 import src.model.ModificaUtilita;
 import src.model.Prenotazione;
+import src.model.Visita;
 import src.model.db.FruitoreManager;
 import src.model.db.PrenotazioneManager;
+import src.model.db.VisiteManagerDB;
 import src.view.ViewUtilita;
 import src.view.ConsoleIO;
 
@@ -85,12 +88,24 @@ public class FruitoreController {
      */
     public void cancellaPrenotazione() {
         List<Prenotazione> prenotazioni = prenotazioneManager.miePrenotazioni(fruitoreCorrente);
+        LocalDate oggi = LocalDate.now();
+        
         if (prenotazioni.isEmpty()) {
             consoleIO.mostraMessaggio("Non hai prenotazioni da cancellare.");
             return;
         }
+        
+        // Prima fai scegliere la prenotazione
         int scelta = consoleIO.chiediSelezionePrenotazione(prenotazioni);
         Prenotazione prenotazioneDaCancellare = prenotazioni.get(scelta);
+        int visitaPrenotataId = prenotazioneDaCancellare.getIdVisita();
+        Visita visitaPrenotata = VisiteManagerDB.getVisitaById(visitaPrenotataId);
+
+        if(oggi.isAfter(visitaPrenotata.getData().minusDays(2))) {
+            consoleIO.mostraMessaggio("Non puoi cancellare questa prenotazione: mancano meno di 2 giorni alla visita.");
+            return;
+        }
+        
         if (consoleIO.chiediConfermaCancellazionePrenotazione(prenotazioneDaCancellare)) {
             boolean successo = modificaUtilita.cancellaPrenotazione(prenotazioneDaCancellare, prenotazioneManager);
             consoleIO.mostraRisultatoCancellazionePrenotazione(successo);

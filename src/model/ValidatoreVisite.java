@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import src.model.db.PrenotazioneManager;
 import src.model.db.VisiteManagerDB;
 import src.view.ConsoleIO;
 
@@ -27,6 +29,7 @@ import src.view.ConsoleIO;
 public class ValidatoreVisite {
     /** Manager per la gestione delle visite nel database */
     private VisiteManagerDB visiteManager;
+    private PrenotazioneManager prenotazioneManager;
     
     /** Mappa thread-safe delle visite attive nel sistema */
     private ConcurrentHashMap<Integer, Visita> visiteMap = new ConcurrentHashMap<>();
@@ -40,9 +43,16 @@ public class ValidatoreVisite {
      * 
      * @param visiteManager Manager per l'accesso ai dati delle visite
      */
-    public ValidatoreVisite(VisiteManagerDB visiteManager) {
+    public ValidatoreVisite(VisiteManagerDB visiteManager, PrenotazioneManager prenotazioneManager) {
         this.visiteManager = visiteManager;
         this.visiteMap = visiteManager.getVisiteMap();
+        this.prenotazioneManager = prenotazioneManager;
+    }
+
+    public void validatoreAuto(){
+        gestioneVisiteAuto();
+        gestioneDatePrecluseAuto();
+        gestionePrenotazioniAuto();
     }
 
     /**
@@ -55,29 +65,128 @@ public class ValidatoreVisite {
      * Viene eseguita automaticamente dal sistema per mantenere coerenza dei dati.
      */
     public void gestioneVisiteAuto(){
+        visiteManager.caricaVisiteAsync();
         visiteMap = visiteManager.getVisiteMap();
+        
         for(Visita visita : visiteMap.values()){
-            if(visita.getData().isBefore(LocalDate.now()) && 
-               !visita.getStato().equals("Completata") && 
-               !visita.getStato().equals("Cancellata")){
-                if(visita.getPostiPrenotati() >= visita.getMinPartecipanti()){
-                    visita.setStato("Confermata");
-                    visiteManager.aggiornaVisita(visita.getId(), visita);
-                } else if (visita.getPostiPrenotati() < visita.getMinPartecipanti()) {
-                    visita.setStato("Cancellata");
-                    visiteManager.aggiornaVisita(visita.getId(), visita);
-                } else if (visita.getPostiPrenotati() == visita.getMaxPersone()) {
-                    visita.setStato("Completa");
-                    visiteManager.aggiornaVisita(visita.getId(), visita);
-                }
-            } else  if (visita.getData().isEqual(LocalDate.now())) {
-                if (visita.getOraInizio().plusMinutes(visita.getDurataMinuti()).isAfter(LocalTime.now())
-                    && visita.getStato().equals("Completa")) {
-                        visita.setStato("Effettuata");
-                        visiteManager.aggiornaVisita(visita.getId(), visita);
-                }
-
+            String statoAttuale = visita.getStato();
+            
+            // Salta visite già in stati finali
+            if (statoAttuale.equals("Completata") || 
+                statoAttuale.equals("Cancellata") ||
+                statoAttuale.equals("Effettuata")) {
+                continue;
             }
+            
+            // 1. Da "Proposta" a "Confermata" quando raggiunge minimo partecipanti
+            if (visita.getPostiPrenotati() >= visita.getMinPartecipanti() && 
+                statoAttuale.equals("Proposta")) {
+                
+                visita.setStato("Confermata");
+                visiteManager.aggiornaVisita(visita.getId(), visita);
+            }
+            
+            // 2. Da "Confermata" a "Proposta" se scende sotto il minimo (solo per visite future)
+            else if (visita.getPostiPrenotati() < visita.getMinPartecipanti() && 
+                    statoAttuale.equals("Confermata") &&
+                    !visita.getData().isBefore(LocalDate.now())) {
+                
+                visita.setStato("Proposta");
+                visiteManager.aggiornaVisita(visita.getId(), visita);
+            }
+            
+            // 3. Da "Proposta/Confermata" a "Completa" quando raggiunge massimo
+            else if (visita.getPostiPrenotati() >= visita.getMaxPersone() && 
+                    (statoAttuale.equals("Proposta") || statoAttuale.equals("Confermata"))) {
+                
+                visita.setStato("Completa");
+                visiteManager.aggiornaVisita(visita.getId(), visita);
+            }
+            
+            // 4. Da "Completa" a "Confermata" se scendono le prenotazioni
+            else if (visita.getPostiPrenotati() < visita.getMaxPersone() && 
+                    visita.getPostiPrenotati() >= visita.getMinPartecipanti() &&
+                    statoAttuale.equals("Completa") &&
+                    !visita.getData().isBefore(LocalDate.now())) {
+                
+                visita.setStato("Confermata");
+                visiteManager.aggiornaVisita(visita.getId(), visita);
+            }
+            
+            // 5. Cancellazione per visite passate senza minimo partecipanti
+            else if (visita.getPostiPrenotati() < visita.getMinPartecipanti() && 
+                    visita.getData().isBefore(LocalDate.now()) &&
+                    statoAttuale.equals("Proposta")) {
+                
+                visita.setStato("Cancellata");
+                visiteManager.aggiornaVisita(visita.getId(), visita);
+            }
+            
+            // 6. Transizione a "Effettuata" per visite di oggi terminate
+            else if (visita.getData().isEqual(LocalDate.now()) && 
+                    statoAttuale.equals("Completa")) {
+                
+                LocalTime fineVisita = visita.getOraInizio().plusMinutes(visita.getDurataMinuti());
+                if (fineVisita.isBefore(LocalTime.now())) {
+                    visita.setStato("Effettuata");
+                    visiteManager.aggiornaVisita(visita.getId(), visita);
+                }
+            }
+        }
+    }
+
+    /**
+     * Gestisce automaticamente l'aggiornamento dello stato delle prenotazioni.
+     * Regole applicate:
+     * - Prenotazioni associate a visite "Effettuata": diventano "EFFETTUATA"
+     * - Prenotazioni associate a visite "Cancellata": diventano "CANCELLATA"
+     * 
+     * Viene eseguita automaticamente dal sistema per mantenere la coerenza
+     * tra lo stato delle visite e delle relative prenotazioni.
+     */
+    public void gestionePrenotazioniAuto() {
+        try {
+            // Ottieni tutte le prenotazioni attive dal database
+            prenotazioneManager.caricaPrenotazioniAsync();
+            ConcurrentHashMap<String, Prenotazione> prenotazioniMap = PrenotazioneManager.getPrenotazioniMap();
+            
+            // Aggiorna la mappa delle visite per avere i dati più recenti
+            visiteMap = visiteManager.getVisiteMap();
+            
+            // Itera su tutte le prenotazioni
+            for (Prenotazione prenotazione : prenotazioniMap.values()) {
+                // Trova la visita associata alla prenotazione
+                Visita visitaAssociata = visiteMap.get(prenotazione.getIdVisita());
+                
+                if (visitaAssociata != null) {
+                    String statoVisita = visitaAssociata.getStato();
+                    String statoPrenotazioneAttuale = prenotazione.getStato();
+                    
+                    // Gestisci prenotazioni per visite effettuate
+                    if ("Effettuata".equals(statoVisita) && 
+                        !"EFFETTUATA".equals(statoPrenotazioneAttuale)) {
+                        
+                        prenotazione.setStato("EFFETTUATA");
+                        prenotazioneManager.aggiornaPrenotazione(prenotazione.getId(), prenotazione);
+                    }
+                    
+                    // Gestisci prenotazioni per visite cancellate
+                    else if ("Cancellata".equals(statoVisita) && 
+                            !"CANCELLATA".equals(statoPrenotazioneAttuale)) {
+                        
+                        prenotazione.setStato("CANCELLATA");
+                        prenotazioneManager.aggiornaPrenotazione(prenotazione.getId(), prenotazione);
+                    }
+                } else {
+                    // Gestisci il caso in cui la visita non esiste più
+                    consoleIO.mostraErrore("Visita con ID " + prenotazione.getIdVisita() + 
+                                        " non trovata per prenotazione ID " + prenotazione.getId());
+                }
+            }
+            
+        } catch (Exception e) {
+            consoleIO.mostraErrore("Errore durante la gestione automatica delle prenotazioni: " + 
+                                e.getMessage());
         }
     }
 

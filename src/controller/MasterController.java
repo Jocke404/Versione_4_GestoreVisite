@@ -133,7 +133,7 @@ public class MasterController {
         viewUtilita = ViewUtilita.getInstance();
         visiteController = new VisiteController(visiteManager);
         luoghiController = new LuoghiController(luoghiManager, viewUtilita);
-        validatore = new ValidatoreVisite(visiteManager);
+        validatore = new ValidatoreVisite(visiteManager, prenotazioneManager);
 
 
         
@@ -162,8 +162,7 @@ public class MasterController {
         if (autentica()) {
             threadPoolController.createThreadPool(1).submit(() -> {
                 try {
-                    validatore.gestioneVisiteAuto();
-                    validatore.gestioneDatePrecluseAuto();
+                    validatore.validatoreAuto();
                     disponibilita.sincronizzaDisponibilitaVolontari(volontariManager);
                 } catch (Throwable t) {
                     System.err.println("Errore gestioneVisiteAuto (immediato): " + t.getMessage());
@@ -184,7 +183,7 @@ public class MasterController {
                     } catch (Throwable t) {
                         System.err.println("Errore gestioneVisiteAuto (scheduler): " + t.getMessage());
                     }
-                }, 5, 5, TimeUnit.SECONDS); 
+                }, 50, 50, TimeUnit.MILLISECONDS);
             }
             aggiornaDatabaseAsync();            
             showMenu();
@@ -231,8 +230,16 @@ public class MasterController {
         }
         if (isAuth) {
             utenteCorrente = authenticationController.getUtenteCorrente();
-            volontariController = new VolontariController(volontariManager, aggiuntaUtilita, consoleIO, volontarioCorrente, validatore, viewUtilita);
-            configuratoriController = new ConfiguratoriController(aggiuntaUtilita, modificaUtilita, viewUtilita, volontariController, luoghiController, visiteController, visiteManager, volontariManager, luoghiManager);
+            volontariController = new VolontariController(volontariManager, aggiuntaUtilita, 
+                                                            consoleIO, volontarioCorrente, 
+                                                            validatore, viewUtilita);
+            configuratoriController = new ConfiguratoriController(aggiuntaUtilita, modificaUtilita, 
+                                                                    viewUtilita, volontariController, 
+                                                                    luoghiController, visiteController, 
+                                                                    visiteManager, volontariManager, luoghiManager, prenotazioneManager);
+            fruitoreController = new FruitoreController(fruitoreManager, aggiuntaUtilita, 
+                                                            viewUtilita, modificaUtilita, 
+                                                            fruitoreCorrente, prenotazioneManager);
         } else {
             utenteCorrente = null;
             consoleIO.mostraMessaggio("Numero massimo di tentativi superato. Accesso negato.");

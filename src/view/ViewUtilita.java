@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 import lib.InputDati;
 import lib.ServizioFile;
 import src.controller.VolontariController;
@@ -174,16 +173,26 @@ public class ViewUtilita {
         }
 
         boolean visiteTrovate = false;
+        ConcurrentHashMap<String, Prenotazione> prenotazioniMap = PrenotazioneManager.getPrenotazioniMap();
     
         for (Map.Entry<Integer, Visita> entry : visiteMap.entrySet()) {
             Visita visita = entry.getValue();
-            if (visita.getVolontario().equals(volontario.getNome() + " " + volontario.getCognome())) {
-                System.out.println("ID: " + entry.getKey());
-                System.out.println("Luogo: " + visita.getLuogo());
-                System.out.println("Tipi Visita: " + visita.getTipiVisitaClassString());
-                System.out.println("Data: " + (visita.getData() != null ? visita.getData() : "Nessuna data"));
-                System.out.println("Stato: " + visita.getStato());
-                System.out.println("-------------------------");
+            if (visita.getVolontario().equals(volontario.getNome() + " " + volontario.getCognome()) &&
+                !visita.getStato().equalsIgnoreCase("CANCELLATA")) {
+                consoleIO.mostraMessaggio("ID: " + entry.getKey());
+                consoleIO.mostraMessaggio("Luogo: " + visita.getLuogo());
+                consoleIO.mostraMessaggio("Tipi Visita: " + visita.getTipiVisitaClassString());
+                consoleIO.mostraMessaggio("Data: " + (visita.getData() != null ? visita.getData() : "Nessuna data"));
+                consoleIO.mostraMessaggio("Stato: " + visita.getStato());
+                consoleIO.mostraMessaggio("Posti prenotati: " + (visita.getPostiPrenotati()));
+                consoleIO.mostraMessaggio("Codici di Prenotazione associati: \n");
+                for (String codice : prenotazioniMap.keySet()) {
+                    if (prenotazioniMap.get(codice).getIdVisita() == entry.getKey() &&
+                        !prenotazioniMap.get(codice).getStato().equals("CANCELLATA")) {
+                        consoleIO.mostraMessaggio("\t- " + codice + " Numero Persone: " + prenotazioniMap.get(codice).getNumeroPersone());
+                    }
+                }
+                consoleIO.mostraMessaggio("==========================");
                 visiteTrovate = true;
             }
         }
@@ -253,7 +262,7 @@ public class ViewUtilita {
             String stato = visita.getStato();
             int postiDisponibili = visita.getPostiDisponibili();
 
-            if ((stato.equalsIgnoreCase("Proposta") || stato.equalsIgnoreCase("Confermata")|| stato.equalsIgnoreCase("Cancellata"))
+            if ((stato.equalsIgnoreCase("Proposta") || stato.equalsIgnoreCase("Confermata"))
                 && postiDisponibili > 0) {
                 consoleIO.mostraMessaggio("ID: " + visita.getId());
                 consoleIO.mostraMessaggio("Titolo: " + visita.getTitolo());
@@ -262,6 +271,9 @@ public class ViewUtilita {
                 consoleIO.mostraMessaggio("Tipi Visita: " + visita.getTipiVisitaClassString());
                 consoleIO.mostraMessaggio("Data: " + (visita.getData() != null ? visita.getData() : "Nessuna data"));
                 consoleIO.mostraMessaggio("Orario: " + (visita.getOraInizio() != null ? visita.getOraInizio() : "Nessun orario"));
+                consoleIO.mostraMessaggio("Durata: " + (visita.getDurataMinuti() > 0 ? visita.getDurataMinuti() + " minuti" : "Nessuna durata"));
+                consoleIO.mostraMessaggio("Biglietto: " + (visita.isBiglietto() ? "Sì" : "No"));
+                consoleIO.mostraMessaggio("Barriere Architettoniche: " + (visita.getBarriereArchitettoniche() ? "Sì" : "No"));
                 consoleIO.mostraMessaggio("Posti disponibili: " + postiDisponibili);
                 consoleIO.mostraMessaggio("Stato: " + stato);
                 consoleIO.mostraMessaggio("-------------------------");
@@ -277,7 +289,15 @@ public class ViewUtilita {
     public void visualizzaPrenotazioni(Fruitore fruitoreCorrente, PrenotazioneManager prenotazioniManager) {
         consoleIO.mostraMessaggio("Le tue prenotazioni:");
         List<Prenotazione> visitePrenotate = prenotazioniManager.miePrenotazioni(fruitoreCorrente);
-        consoleIO.mostraElencoConOggetti(visitePrenotate);
+        for (Prenotazione prenotazione : visitePrenotate) {
+            Visita visita = visiteMap.get(prenotazione.getIdVisita());
+            consoleIO.mostraMessaggio("Codice Prenotazione: " + prenotazione.getCodicePrenotazione());
+            consoleIO.mostraMessaggio("Visita: " + (visita != null ? visita.getTitolo() : "Visita non trovata"));
+            consoleIO.mostraMessaggio("Data Prenotazione: " + prenotazione.getDataPrenotazione());
+            consoleIO.mostraMessaggio("Numero Persone: " + prenotazione.getNumeroPersone());
+            consoleIO.mostraMessaggio("Stato Visita: " + visita.getStato());
+            consoleIO.mostraMessaggio("-------------------------");
+        }
     }
 
          
@@ -309,10 +329,6 @@ public class ViewUtilita {
         }
     }
 
-	 
-     
-     
-	 
     public void stampaMaxPersoneIscrivibiliNow() {
     Integer maxDb = null;
         try {

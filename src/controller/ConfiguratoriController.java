@@ -13,6 +13,7 @@ import src.model.TipiVisitaClass;
 import src.model.Visita;
 import src.model.Volontario;
 import src.model.db.LuoghiManager;
+import src.model.db.PrenotazioneManager;
 import src.model.db.VisiteManagerDB;
 import src.model.db.VolontariManager;
 import src.view.ViewUtilita;
@@ -62,6 +63,9 @@ public class ConfiguratoriController {
     /** Manager per le operazioni sulle visite */
     private VisiteManagerDB visiteManagerDB;
 
+    /** Manager per le operazioni sulle prenotazioni */
+    private PrenotazioneManager prenotazioneManager;
+
     /**
      * Costruttore del controller dei configuratori.
      * 
@@ -74,6 +78,7 @@ public class ConfiguratoriController {
      * @param visiteManagerDB il manager delle visite
      * @param volontariManager il manager dei volontari
      * @param luoghiManager il manager dei luoghi
+     * @param prenotazioneManager il manager delle prenotazioni
      */
     public ConfiguratoriController(
         AggiuntaUtilita addUtilita, 
@@ -84,7 +89,8 @@ public class ConfiguratoriController {
         VisiteController visiteController,
         VisiteManagerDB visiteManagerDB,
         VolontariManager volontariManager,
-        LuoghiManager luoghiManager
+        LuoghiManager luoghiManager,
+        PrenotazioneManager prenotazioneManager
     ) {
         this.addUtilita = addUtilita;
         this.modificaUtilita = modificaUtilita;
@@ -95,6 +101,7 @@ public class ConfiguratoriController {
         this.visiteManagerDB = visiteManagerDB;
         this.volontariManager = volontariManager;   
         this.luoghiManager = luoghiManager;
+        this.prenotazioneManager = prenotazioneManager;
     }
 
     /**
@@ -199,7 +206,7 @@ public class ConfiguratoriController {
         if (InputDati.yesOrNo("Vuoi pianificare la visita usando le disponibilità dei volontari? (s/n)")) {
             nuovaVisita = consoleIO.pianificazioneGuidata(visiteManagerDB, volontariManager, luoghiManager);
         } else {
-            nuovaVisita = consoleIO.pianificazioneLibera(visiteManagerDB, volontariManager, luoghiManager);
+            nuovaVisita = consoleIO.pianificazioneLibera(visiteManagerDB, volontariManager, luoghiManager, prenotazioneManager);
         }
 
 
@@ -432,11 +439,17 @@ public class ConfiguratoriController {
         consoleIO.mostraElencoConOggetti(visiteManagerDB.getVisiteMap().values().stream().toList());
         if (consoleIO.chiediAnnullaOperazione()) return;
         List<Visita> visite = new ArrayList<>(visiteManagerDB.getVisiteMap().values());
-        if (visite.isEmpty()) {
+        List<Visita> visiteNonAssegnate = new ArrayList<>();
+        for(Visita v : visite){
+            if (v.getVolontario() == null) {
+                visiteNonAssegnate.add(v);
+            }
+        }
+        if (visiteNonAssegnate.isEmpty()) {
             consoleIO.mostraMessaggio("Nessuna visita disponibile per l'assegnazione.");
         }
-        int sceltaVisita = consoleIO.chiediSelezioneVisita(visite);
-        Visita visitaSelezionata = visite.get(sceltaVisita);
+        int sceltaVisita = consoleIO.chiediSelezioneVisita(visiteNonAssegnate);
+        Visita visitaSelezionata = visiteNonAssegnate.get(sceltaVisita);
 
         List<Volontario> volontari = new ArrayList<>(volontariManager.getVolontariMap().values());
         if (volontari.isEmpty()) {

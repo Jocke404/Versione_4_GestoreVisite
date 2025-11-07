@@ -23,7 +23,7 @@ import src.model.Volontario;
  */
 public class VisiteManagerDB extends DatabaseManager {
     /** Mappa concorrente delle visite indicizzata per ID */
-    private ConcurrentHashMap<Integer, Visita> visiteMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Integer, Visita> visiteMap = new ConcurrentHashMap<>();
     
     /** Mappa delle date in cui non è possibile organizzare visite */
     private ConcurrentHashMap<LocalDate, String> datePrecluseMap = new ConcurrentHashMap<>();
@@ -36,6 +36,11 @@ public class VisiteManagerDB extends DatabaseManager {
      */
     public VisiteManagerDB(ThreadPoolController threadPoolManager) {
         super(threadPoolManager);
+        caricaVisite();
+        caricaDatePrecluse();
+    }
+
+    public void caricaVisiteAsync() {
         caricaVisite();
         caricaDatePrecluse();
     }
@@ -580,5 +585,7 @@ public class VisiteManagerDB extends DatabaseManager {
         rimuoviTipoDiVisitaDB(tipoDaRimuovere);
     }
 
-
+    public static Visita getVisitaById(int visitaId) {
+        return visiteMap.get(visitaId);
+    }
 }

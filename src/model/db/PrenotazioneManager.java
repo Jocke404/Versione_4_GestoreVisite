@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class PrenotazioneManager extends DatabaseManager {
     /** Mappa concorrente delle prenotazioni indicizzata per codice prenotazione */
-    private ConcurrentHashMap<String, Prenotazione> prenotazioniMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Prenotazione> prenotazioniMap = new ConcurrentHashMap<>();
     
     /** Manager delle visite per verificare disponibilità */
     private VisiteManagerDB visiteManager;
@@ -155,7 +155,7 @@ public class PrenotazioneManager extends DatabaseManager {
                         rs.getInt("numero_persone")
                     );
                     prenotazione.setId(rs.getInt("id"));
-                    prenotazione.setDataPrenotazione(rs.getTimestamp("data_prenotazione").toLocalDateTime());
+                    prenotazione.setDataPrenotazione(rs.getDate("data_prenotazione").toLocalDate());
                     prenotazione.setCodicePrenotazione(rs.getString("codice_prenotazione"));
                     prenotazione.setStato(rs.getString("stato"));
                     
@@ -165,6 +165,33 @@ public class PrenotazioneManager extends DatabaseManager {
             
         } catch (SQLException e) {
             System.err.println("Errore durante il caricamento delle prenotazioni: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Aggiorna una prenotazione esistente nel database.
+     * 
+     * @param id l'ID della prenotazione da aggiornare
+     * @param prenotazione l'oggetto prenotazione con i nuovi dati
+     */
+    protected void aggiornaPrenotazioneDB(int id, Prenotazione prenotazione) {
+        String sql = "UPDATE prenotazioni SET id_visita = ?, email_fruitore = ?, numero_persone = ?, data_prenotazione = ?, codice_prenotazione = ?, stato = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, prenotazione.getIdVisita());
+            pstmt.setString(2, prenotazione.getEmailFruitore());
+            pstmt.setInt(3, prenotazione.getNumeroPersone());
+            pstmt.setDate(4, Date.valueOf(prenotazione.getDataPrenotazione()));
+            pstmt.setString(5, prenotazione.getCodicePrenotazione());
+            pstmt.setString(6, prenotazione.getStato());
+            pstmt.setInt(7, id);
+            
+            pstmt.executeUpdate();
+            
+        } catch (SQLException e) {
+            System.err.println("Errore durante l'aggiornamento della prenotazione: " + e.getMessage());
         }
     }
 
@@ -273,5 +300,19 @@ public class PrenotazioneManager extends DatabaseManager {
     public List<Prenotazione> miePrenotazioni(Fruitore fruitore) {
         return getPrenotazioniFruitore(fruitore.getEmail());
     }
+
+    public static ConcurrentHashMap<String, Prenotazione> getPrenotazioniMap() {
+        return prenotazioniMap;
+    }
+
+    public void caricaPrenotazioniAsync() {
+       caricaPrenotazioni();
+    }
+
+    public void aggiornaPrenotazione(int id, Prenotazione prenotazione) {
+        aggiornaPrenotazioneDB(id, prenotazione);
+    }
+
+
 
 }

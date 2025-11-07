@@ -99,6 +99,46 @@ public class Visita {
         return postiPrenotati;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setTitolo(String titolo) {
+        this.titolo = titolo;
+    }
+
+    public void setLuogo(String luogo) {
+        this.luogo = luogo;
+    }
+
+    public List<TipiVisitaClass> getTipiVisita() {
+        return tipiVisita;
+    }
+
+    public void setTipiVisita(List<TipiVisitaClass> tipiVisita) {
+        this.tipiVisita = tipiVisita;
+    }
+
+    public void setVolontario(String volontario) {
+        this.volontario = volontario;
+    }
+
+    public void setMaxPersone(int maxPersone) {
+        this.maxPersone = maxPersone;
+    }
+
+    public void setMinPartecipanti(int minPartecipanti) {
+        this.minPartecipanti = minPartecipanti;
+    }
+
+    public void setBiglietto(boolean biglietto) {
+        this.biglietto = biglietto;
+    }
+
+    public void setBarriereArchitettoniche(boolean barriereArchitettoniche) {
+        this.barriereArchitettoniche = barriereArchitettoniche;
+    }
+
     /**
      * Imposta il numero di posti prenotati.
      * @param postiPrenotati il nuovo numero di posti prenotati
@@ -250,6 +290,8 @@ public class Visita {
         this.stato = stato;
     }
 
+    
+
     /**
      * Restituisce la descrizione del primo tipo di visita.
      * @return la descrizione o stringa vuota se non disponibile
@@ -303,5 +345,6 @@ public class Visita {
             "\nBiglietto richiesto: " + (isBiglietto() ? "Sì" : "No") +
             "\nBarriere architettoniche: " + (getBarriereArchitettoniche() ? "Sì" : "No");
     }
+
 }
    

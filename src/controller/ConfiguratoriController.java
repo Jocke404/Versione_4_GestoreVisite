@@ -189,9 +189,40 @@ public class ConfiguratoriController {
         Visita visitaSelezionata = visite.get(scelta);
         LocalDate dataOriginale = visitaSelezionata.getData();
         LocalDate nuovaData = consoleIO.chiediNuovaDataVisita(dataOriginale);
+        String statoOriginale = visitaSelezionata.getStato();
+        String[] stati = {"Proposta", "Completa", "Confermata", "Cancellata", "Effettuata"};
+        String nuovoStato = consoleIO.chiediNuovoStato(stati);
         if (consoleIO.chiediConfermaModificaData(dataOriginale, nuovaData)) {
             boolean successo = modificaUtilita.aggiornaDataVisita(visitaSelezionata.getId(), nuovaData);
             consoleIO.mostraRisultatoModificaData(successo);
+            if (successo) {
+                // se la nuova data è futura rispetto ad oggi, forziamo lo stato a "Proposta"
+                if (nuovaData.isAfter(LocalDate.now())) {
+                    boolean statoAggiornato = modificaUtilita.aggiornaStatoVisita(visitaSelezionata.getId(), "Proposta");
+                    if (statoAggiornato) {
+                        consoleIO.mostraMessaggio("Data aggiornata: la visita è stata spostata in futuro e lo stato è stato impostato a 'Proposta'.");
+                        // Aggiorna anche l'oggetto in memoria per coerenza
+                        visitaSelezionata.setData(nuovaData);
+                        visitaSelezionata.setStato("Proposta");
+                    } else {
+                        consoleIO.mostraMessaggio("Data aggiornata ma non è stato possibile aggiornare lo stato a 'Proposta'.");
+                    }
+                } else {
+                    // se la data non è futura, lasciare la scelta di stato all'operatore (se diversa)
+                    if (nuovoStato != null && !nuovoStato.equals(statoOriginale)) {
+                        boolean statoAggiornato = modificaUtilita.aggiornaStatoVisita(visitaSelezionata.getId(), nuovoStato);
+                        if (statoAggiornato) {
+                            consoleIO.mostraMessaggio("Stato della visita aggiornato a: " + nuovoStato);
+                            visitaSelezionata.setStato(nuovoStato);
+                        } else {
+                            consoleIO.mostraMessaggio("Impossibile aggiornare lo stato della visita.");
+                        }
+                    } else {
+                        // aggiorniamo comunque la data in memoria
+                        visitaSelezionata.setData(nuovaData);
+                    }
+                }
+            }
         } else {
             consoleIO.mostraMessaggio("Modifica annullata. Nessun cambiamento effettuato.");
         }

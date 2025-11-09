@@ -1,0 +1,34 @@
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "MainVisite",
+            "request": "launch",
+            "mainClass": "src.MainVisite",
+            "projectName": "Versione_4_GestoreVisite_eebd43b1"
+        },
+        {
+            "type": "java",
+            "name": "MainVisite",
+            "request": "launch",
+            "mainClass": "src.MainVisite",
+            "projectName": "Versione_3_GestoreVisite_94e1d970"
+        },
+        {
+            "type": "java",
+            "name": "MainVisite",
+            "request": "launch",
+            "mainClass": "src.MainVisite",
+            "projectName": "Versione_2_GestoreVisite_3b066f2f"
+        },
+        {
+            "type": "java",
+            "name": "MainVisite",
+            "request": "launch",
+            "mainClass": "src.MainVisite",
+            "projectName": "Versione_1_GestoreVisite_e12b04ee"
+        }
+    ]
+}
